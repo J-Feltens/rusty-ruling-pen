@@ -1,7 +1,6 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::canvas::HEIGHT;
-use crate::canvas::WIDTH;
+use crate::canvas::Canvas;
 
 /*
     Some simple vector utilites to kick it off
@@ -147,18 +146,26 @@ impl Object {
         self.origin += vector;
     }
 
-    pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>) {
+    pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>, size_x: usize, size_y: usize) {
         // draw a circle for starters
-        for y_ in 0..HEIGHT {
-            for x_ in 0..WIDTH {
+        for y_ in 0..size_y {
+            for x_ in 0..size_x {
                 if (x_ as i64 - self.origin.x as i64).pow(2)
                     + (y_ as i64 - self.origin.y as i64).pow(2)
                     < self.r as i64
                 {
-                    buffer[y_ * WIDTH + x_] = self.color;
+                    buffer[y_ * size_x + x_] = self.color;
                 }
             }
         }
+    }
+
+    pub fn draw_on_canvas(&self, canvas: &mut Canvas) {
+        self.draw_on_buffer(
+            &mut canvas.buffer,
+            canvas.size_x as usize,
+            canvas.size_y as usize,
+        );
     }
 }
 

@@ -2,8 +2,7 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use rand::{Rng, rng};
 use std::process::exit;
 
-use crate::canvas::HEIGHT;
-use crate::canvas::WIDTH;
+use crate::canvas::Canvas;
 use crate::colors::Color;
 use crate::sprites::Sprite;
 use crate::util::{Object, Stack, Vector2d};
@@ -17,11 +16,14 @@ const PI: f64 = 3.14159265359;
 const WOBBLE_FAC_1: f64 = 0.08;
 const WOBBLE_FAC_2: f64 = 5.0;
 
+const SIZE_X: u32 = 1000;
+const SIZE_Y: u32 = 600;
+
 fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
-    for y_ in 0..HEIGHT {
-        for x_ in 0..WIDTH {
+    for y_ in 0..SIZE_X {
+        for x_ in 0..SIZE_Y {
             if (x_ as i64 - x as i64).pow(2) + (y_ as i64 - y as i64).pow(2) < r as i64 {
-                buffer[y_ * WIDTH + x_] = color;
+                buffer[(y_ * SIZE_X + x_) as usize] = color;
             }
         }
     }
@@ -38,18 +40,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let black: Color = Color { r: 0, g: 0, b: 0 };
 
     // initialize 32 bit buffer as canvas
-    let mut buffer: Vec<u32> = vec![white.as_u32(); canvas::WIDTH * canvas::HEIGHT];
-    for y in 0..canvas::HEIGHT {
-        for x in 0..canvas::WIDTH {
-            buffer[y * canvas::WIDTH + x] = white.as_u32();
-        }
-    }
+    let mut canvas: Canvas = Canvas::new(SIZE_X, SIZE_Y);
 
     // create a window and show the buffer
     let mut window = Window::new(
         "RRP (Rusty Ruling Pen)",
-        canvas::WIDTH,
-        canvas::HEIGHT,
+        SIZE_X as usize,
+        SIZE_Y as usize,
         WindowOptions::default(),
     )?;
 
@@ -80,10 +77,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Mouse position: ({}, {})", mx, my);
 
             // initialize new frame buffer (very inefficient, but it will need to make due for now)
-            let mut buffer: Vec<u32> = vec![white.as_u32(); canvas::WIDTH * canvas::HEIGHT];
-            for y in 0..canvas::HEIGHT {
-                for x in 0..canvas::WIDTH {
-                    buffer[y * canvas::WIDTH + x] = white.as_u32();
+            let mut next_canvas = canvas.clone();
+            for y in 0..SIZE_Y {
+                for x in 0..SIZE_X {
+                    next_canvas.buffer[(y * SIZE_X + x) as usize] = white.as_u32();
                 }
             }
 
@@ -105,13 +102,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 delta_object_mouse.scale(inertia);
 
                 obj.translate(delta_object_mouse);
-                obj.draw_on_buffer(&mut buffer);
+                obj.draw_on_canvas(&mut next_canvas);
             }
 
             // render new framebuffer
-            window.update_with_buffer(&buffer, canvas::WIDTH, canvas::HEIGHT)?;
+            window.update_with_buffer(&next_canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
         } else {
-            println!("No mouse detected :(");
+            // println!("No mouse detected :(");
         };
     }
 

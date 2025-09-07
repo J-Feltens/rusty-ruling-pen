@@ -22,10 +22,9 @@ impl Circle {
 
     pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>, size_x: u32, size_y: u32) {
         // compute if entire spite is within canvas, if so ignore comparison for every pixel
-        if 
         for y_idx in 0..self.sprite.size_y {
             for x_idx in 0..self.sprite.size_x {
-
+                continue;
             }
         }
     }
