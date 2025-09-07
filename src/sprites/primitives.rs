@@ -10,14 +10,23 @@ impl Circle {
         let mut sprite: Sprite = Sprite::new((r / 2.0) as u32, (r / 2.0) as u32);
         for y in 0..sprite.size_x {
             for x in 0..sprite.size_y {
-                let dist: f64 =
-                    (((x - sprite.size_x / 2).pow(2) + (y - sprite.size_y / 2).pow(2)) as f64);
-                let r_square = r.powi(2);
-                if r < dist {
+                let dist: u32 = (x - sprite.size_x / 2).pow(2) + (y - sprite.size_y / 2).pow(2);
+                let r_square: u32 = r.powi(2) as u32;
+                if r_square < dist {
                     sprite.grid[(y * sprite.size_y + x) as usize] = color.clone();
                 }
             }
         }
         Circle { sprite: (sprite) }
+    }
+
+    pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>, size_x: u32, size_y: u32) {
+        // compute if entire spite is within canvas, if so ignore comparison for every pixel
+        if 
+        for y_idx in 0..self.sprite.size_y {
+            for x_idx in 0..self.sprite.size_x {
+
+            }
+        }
     }
 }
