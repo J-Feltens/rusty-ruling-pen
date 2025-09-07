@@ -2,17 +2,20 @@ use std::process::exit;
 
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use rand::Rng;
+use rand::rng;
 
 use crate::canvas::HEIGHT;
 use crate::canvas::WIDTH;
 use crate::colors::Color;
-use crate::util::{Object, Vector2d};
+use crate::util::{Object, Stack, Vector2d};
 
 pub mod canvas;
 pub mod colors;
 pub mod util;
 
 const PI: f64 = 3.14159265359;
+const WOBBLE_FAC_1: f64 = 0.08;
+const WOBBLE_FAC_2: f64 = 5.0;
 
 fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
     for y_ in 0..HEIGHT {
@@ -25,7 +28,7 @@ fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let mut rng = rand::rng();
+    let mut rng = rand::rng();
 
     let white: Color = Color::from_rgb(255, 255, 255);
     let black: Color = Color::from_rgb(0, 0, 0);
@@ -51,13 +54,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         y: (300.0),
     };
 
-    // let mut stack: Stack = Stack;
+    let mut stack: Stack = Stack::new();
 
-    let mut cursor: Object = Object {
-        origin: world_origin,
-        r: (100.0),
-        color: (black.c),
-    };
+    for i in 1..10 {
+        stack.add_object(Object {
+            origin: (world_origin
+                - Vector2d {
+                    x: (0.0),
+                    y: (25.0 * i as f64),
+                }),
+            r: (50.0),
+            color: (black.c),
+        });
+    }
+
+    let stack_size = stack.len().clone();
 
     // main loop
     while window.is_open() && !window.is_key_down(Key::Enter) {
@@ -77,14 +88,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 y: (my as f64),
             };
 
-            let mut delta_cursor_mouse =
-                (mouse_pos - cursor.origin) * Vector2d { x: (1.0), y: (0.0) };
+            for (i, obj) in stack.iter_mut().enumerate() {
+                let mut delta_object_mouse =
+                    (mouse_pos - obj.origin) * Vector2d { x: (1.0), y: (0.0) };
 
-            // apply "wobblyness"
-            delta_cursor_mouse.scale(0.08);
+                // calc and apply inertia
+                let mut inertia: f64 =
+                    WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
+                if inertia < 0.001 {
+                    inertia = 0.001
+                }
+                delta_object_mouse.scale(inertia);
 
-            cursor.translate(delta_cursor_mouse);
-            cursor.draw_on_buffer(&mut buffer);
+                obj.translate(delta_object_mouse);
+                obj.draw_on_buffer(&mut buffer);
+            }
 
             // render new framebuffer
             window.update_with_buffer(&buffer, canvas::WIDTH, canvas::HEIGHT)?;

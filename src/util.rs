@@ -161,3 +161,28 @@ impl Object {
         }
     }
 }
+
+pub struct Stack {
+    pub stack: Vec<Object>,
+}
+
+impl Stack {
+    pub fn new() -> Stack {
+        Stack { stack: Vec::new() }
+    }
+
+    pub fn add_object(&mut self, obj: Object) {
+        self.stack.push(obj);
+    }
+    pub fn len(&self) -> usize {
+        self.stack.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Object> {
+        self.stack.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Object> {
+        self.stack.iter_mut()
+    }
+}
