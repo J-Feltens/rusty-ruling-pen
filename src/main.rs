@@ -1,16 +1,16 @@
-use std::process::exit;
-
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
-use rand::Rng;
-use rand::rng;
+use rand::{Rng, rng};
+use std::process::exit;
 
 use crate::canvas::HEIGHT;
 use crate::canvas::WIDTH;
 use crate::colors::Color;
+use crate::sprites::Sprite;
 use crate::util::{Object, Stack, Vector2d};
 
 pub mod canvas;
 pub mod colors;
+pub mod sprites;
 pub mod util;
 
 const PI: f64 = 3.14159265359;
@@ -30,14 +30,18 @@ fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::rng();
 
-    let white: Color = Color::from_rgb(255, 255, 255);
-    let black: Color = Color::from_rgb(0, 0, 0);
+    let white: Color = Color {
+        r: 255,
+        g: 255,
+        b: 255,
+    };
+    let black: Color = Color { r: 0, g: 0, b: 0 };
 
     // initialize 32 bit buffer as canvas
-    let mut buffer: Vec<u32> = vec![white.c; canvas::WIDTH * canvas::HEIGHT];
+    let mut buffer: Vec<u32> = vec![white.as_u32(); canvas::WIDTH * canvas::HEIGHT];
     for y in 0..canvas::HEIGHT {
         for x in 0..canvas::WIDTH {
-            buffer[y * canvas::WIDTH + x] = white.c;
+            buffer[y * canvas::WIDTH + x] = white.as_u32();
         }
     }
 
@@ -64,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     y: (25.0 * i as f64),
                 }),
             r: (50.0),
-            color: (black.c),
+            color: (black.as_u32()),
         });
     }
 
@@ -76,10 +80,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Mouse position: ({}, {})", mx, my);
 
             // initialize new frame buffer (very inefficient, but it will need to make due for now)
-            let mut buffer: Vec<u32> = vec![white.c; canvas::WIDTH * canvas::HEIGHT];
+            let mut buffer: Vec<u32> = vec![white.as_u32(); canvas::WIDTH * canvas::HEIGHT];
             for y in 0..canvas::HEIGHT {
                 for x in 0..canvas::WIDTH {
-                    buffer[y * canvas::WIDTH + x] = white.c;
+                    buffer[y * canvas::WIDTH + x] = white.as_u32();
                 }
             }
 
