@@ -1,10 +1,11 @@
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use rand::rand_core::impls::next_u32_via_fill;
 use rand::{Rng, rng};
 use std::process::exit;
 
 use crate::canvas::Canvas;
 use crate::colors::Color;
-use crate::sprites::Sprite;
+use crate::sprites::{Circle, Sprite};
 use crate::util::{Object, Stack, Vector2d};
 
 pub mod canvas;
@@ -55,18 +56,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         y: (300.0),
     };
 
-    let mut stack: Stack = Stack::new();
+    let mut stack = Vec::<Circle>::new();
 
     for i in 1..10 {
-        stack.add_object(Object {
-            origin: (world_origin
-                - Vector2d {
-                    x: (0.0),
-                    y: (25.0 * i as f64),
-                }),
-            r: (50.0),
-            color: (black.as_u32()),
-        });
+        stack.push(Circle::new(50.0, black.clone()));
     }
 
     let stack_size = stack.len().clone();
@@ -78,20 +71,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // initialize new frame buffer (very inefficient, but it will need to make due for now)
             let mut next_canvas = canvas.clone();
-            for y in 0..SIZE_Y {
-                for x in 0..SIZE_X {
-                    next_canvas.buffer[(y * SIZE_X + x) as usize] = white.as_u32();
-                }
-            }
 
             let mouse_pos: Vector2d = Vector2d {
                 x: (mx as f64),
                 y: (my as f64),
             };
 
-            for (i, obj) in stack.iter_mut().enumerate() {
+            for (i, circle) in stack.iter_mut().enumerate() {
                 let mut delta_object_mouse =
-                    (mouse_pos - obj.origin) * Vector2d { x: (1.0), y: (0.0) };
+                    (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
 
                 // calc and apply inertia
                 let mut inertia: f64 =
@@ -101,14 +89,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 delta_object_mouse.scale(inertia);
 
-                obj.translate(delta_object_mouse);
-                obj.draw_on_canvas(&mut next_canvas);
+                circle.sprite.origin += delta_object_mouse;
+                circle.draw_on_buffer(
+                    &mut next_canvas.buffer,
+                    next_canvas.size_x,
+                    next_canvas.size_y,
+                );
             }
 
             // render new framebuffer
             window.update_with_buffer(&next_canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
         } else {
-            // println!("No mouse detected :(");
+            println!("No mouse detected :(");
         };
     }
 

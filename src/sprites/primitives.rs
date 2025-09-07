@@ -1,8 +1,10 @@
+use std::thread::spawn;
+
 use crate::{colors::Color, sprites::Sprite, util::Vector2d};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Circle {
-    sprite: Sprite,
+    pub sprite: Sprite,
 }
 
 impl Circle {
@@ -21,10 +23,19 @@ impl Circle {
     }
 
     pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>, size_x: u32, size_y: u32) {
-        // compute if entire spite is within canvas, if so ignore comparison for every pixel
-        for y_idx in 0..self.sprite.size_y {
-            for x_idx in 0..self.sprite.size_x {
-                continue;
+        // fancier version would be:
+        // compute if entire sprite is within canvas, if so ignore comparison for every pixel
+        for y_idx in 0..self.sprite.size_y as usize {
+            for x_idx in 0..self.sprite.size_x as usize {
+                let target_x = self.sprite.origin.x as usize + x_idx;
+                let target_y = self.sprite.origin.y as usize + y_idx;
+                if 0 < target_x && target_x < size_x as usize - 1 {
+                    if 0 < target_y && target_y < size_y as usize - 1 {
+                        buffer[target_y * y_idx + x_idx] = self.sprite.grid
+                            [(self.sprite.size_y as u32 * y_idx as u32 + x_idx as u32) as usize]
+                            .as_u32();
+                    }
+                }
             }
         }
     }
