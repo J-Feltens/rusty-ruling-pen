@@ -1,19 +1,20 @@
-use crate::util::Vector2d;
+use crate::{colors::Color, util::Vector2d};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 
 pub struct Sprite {
-    pub size_x: u8,
-    pub size_y: u8,
-    // pub grid: Vec<Vector2d>,
+    pub size_x: u32,
+    pub size_y: u32,
+    pub grid: Vec<Color>,
 }
 
 impl Sprite {
-    pub fn new(size_x: u8, size_y: u8) -> Sprite {
+    pub fn new(size_x: u32, size_y: u32) -> Sprite {
+        let grid: Vec<Color> = vec![Color { r: 0, g: 0, b: 0 }; (size_x * size_y) as usize];
         Sprite {
             size_x: (size_x),
             size_y: (size_y),
-            // grid: (vec![white.c; canvas::WIDTH * canvas::HEIGHT]),
+            grid,
         }
     }
 }
