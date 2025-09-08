@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         stack.push(new_circle);
     }
 
-    let stack_size = stack.len().clone();
+    let stack_size = stack.len();
 
     // main loop
     while window.is_open() && !window.is_key_down(Key::Enter) {
