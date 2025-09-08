@@ -39,6 +39,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         b: 255,
     };
     let black: Color = Color { r: 0, g: 0, b: 0 };
+    let magenta: Color = Color {
+        r: 255,
+        g: 0,
+        b: 255,
+    };
 
     // initialize 32 bit buffer as canvas
     let mut canvas: Canvas = Canvas::new(SIZE_X, SIZE_Y);
@@ -56,53 +61,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         y: (300.0),
     };
 
-    let mut stack = Vec::<Circle>::new();
-
-    for i in 1..10 {
-        stack.push(Circle::new(50.0, black.clone()));
-    }
-
-    let stack_size = stack.len().clone();
-
-    // main loop
+    // quick and dirty static sprite
     while window.is_open() && !window.is_key_down(Key::Enter) {
-        if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
-            println!("Mouse position: ({}, {})", mx, my);
+        let mut c = Circle::new(100.0, magenta.clone());
 
-            // initialize new frame buffer (very inefficient, but it will need to make due for now)
-            let mut next_canvas = canvas.clone();
+        canvas.draw_sprite(c.sprite);
 
-            let mouse_pos: Vector2d = Vector2d {
-                x: (mx as f64),
-                y: (my as f64),
-            };
-
-            for (i, circle) in stack.iter_mut().enumerate() {
-                let mut delta_object_mouse =
-                    (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
-
-                // calc and apply inertia
-                let mut inertia: f64 =
-                    WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
-                if inertia < 0.001 {
-                    inertia = 0.001
-                }
-                delta_object_mouse.scale(inertia);
-
-                circle.sprite.origin += delta_object_mouse;
-                circle.draw_on_buffer(
-                    &mut next_canvas.buffer,
-                    next_canvas.size_x,
-                    next_canvas.size_y,
-                );
-            }
-
-            // render new framebuffer
-            window.update_with_buffer(&next_canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
-        } else {
-            println!("No mouse detected :(");
-        };
+        window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
     }
+    // let mut stack = Vec::<Circle>::new();
+
+    // for i in 1..10 {
+    //     stack.push(Circle::new(50.0, black.clone()));
+    // }
+
+    // let stack_size = stack.len().clone();
+
+    // // main loop
+    // while window.is_open() && !window.is_key_down(Key::Enter) {
+    //     if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
+    //         println!("Mouse position: ({}, {})", mx, my);
+
+    //         // initialize new frame buffer (very inefficient, but it will need to make due for now)
+    //         let mut next_canvas = canvas.clone();
+
+    //         let mouse_pos: Vector2d = Vector2d {
+    //             x: (mx as f64),
+    //             y: (my as f64),
+    //         };
+
+    //         for (i, circle) in stack.iter_mut().enumerate() {
+    //             let mut delta_object_mouse =
+    //                 (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
+
+    //             // calc and apply inertia
+    //             let mut inertia: f64 =
+    //                 WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
+    //             if inertia < 0.001 {
+    //                 inertia = 0.001
+    //             }
+    //             delta_object_mouse.scale(inertia);
+
+    //             circle.sprite.origin += delta_object_mouse;
+    //             circle.draw_on_buffer(
+    //                 &mut next_canvas.buffer,
+    //                 next_canvas.size_x,
+    //                 next_canvas.size_y,
+    //             );
+    //         }
+
+    //         // render new framebuffer
+    //         window.update_with_buffer(&next_canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
+    //     } else {
+    //         println!("No mouse detected :(");
+    //     };
+    // }
 
     Ok(())
 }

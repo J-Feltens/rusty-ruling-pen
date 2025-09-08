@@ -9,35 +9,25 @@ pub struct Circle {
 
 impl Circle {
     pub fn new(r: f64, color: Color) -> Circle {
-        let mut sprite: Sprite = Sprite::new((r / 2.0) as u32, (r / 2.0) as u32);
-        for y in 0..sprite.size_x as u32 {
-            for x in 0..sprite.size_y as u32 {
-                let dist: u32 = (x as i32 - sprite.size_x as i32 / 2).pow(2) as u32
-                    + (y as i32 - sprite.size_y as i32 / 2).pow(2) as u32;
-                let r_square: u32 = r.powi(2) as u32;
-                if r_square < dist {
-                    sprite.grid[(y * sprite.size_y + x) as usize] = color.clone();
+        let d = (r * 2.0).ceil() as usize;
+        let mut sprite = Sprite::new(d as u32, d as u32);
+
+        // center of the pixel grid (use -1 so odd/even sizes behave well)
+        let cx = (d as f64 - 1.0) / 2.0;
+        let cy = (d as f64 - 1.0) / 2.0;
+        let r2 = r * r;
+
+        for y in 0..d {
+            let dy = y as f64 - cy;
+            let row = y * d;
+            for x in 0..d {
+                let dx = x as f64 - cx;
+                if dx * dx + dy * dy <= r2 {
+                    // If Color: Copy, drop .clone()
+                    sprite.grid[row + x] = color.clone();
                 }
             }
         }
         Circle { sprite: (sprite) }
-    }
-
-    pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>, size_x: u32, size_y: u32) {
-        // fancier version would be:
-        // compute if entire sprite is within canvas, if so ignore comparison for every pixel
-        for y_idx in 0..self.sprite.size_y as usize {
-            for x_idx in 0..self.sprite.size_x as usize {
-                let target_x = self.sprite.origin.x as usize + x_idx;
-                let target_y = self.sprite.origin.y as usize + y_idx;
-                if 0 < target_x && target_x < size_x as usize - 1 {
-                    if 0 < target_y && target_y < size_y as usize - 1 {
-                        buffer[target_y * y_idx + x_idx] = self.sprite.grid
-                            [(self.sprite.size_y as u32 * y_idx as u32 + x_idx as u32) as usize]
-                            .as_u32();
-                    }
-                }
-            }
-        }
     }
 }

@@ -1,4 +1,5 @@
 use crate::colors::Color;
+use crate::sprites::Sprite;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Canvas {
@@ -17,10 +18,28 @@ impl Canvas {
                 b: (255),
             })
         }
+
         Canvas {
             buffer: buffer,
             size_x: size_x,
             size_y: size_y,
+        }
+    }
+
+    pub fn draw_sprite(&mut self, sprite: Sprite) {
+        for y_idx in 0..sprite.size_y as usize {
+            for x_idx in 0..sprite.size_x as usize {
+                let x_target_in_canvas: u32 = sprite.origin.x as u32 + x_idx as u32;
+                let y_target_in_canvas: u32 = sprite.origin.y as u32 + y_idx as u32;
+
+                if 0 < x_target_in_canvas && x_target_in_canvas < self.size_x {
+                    if 0 < y_target_in_canvas && y_target_in_canvas < self.size_y {
+                        self.buffer
+                            [(y_target_in_canvas * self.size_x + x_target_in_canvas) as usize] =
+                            sprite.grid[y_idx * sprite.size_x as usize + x_idx].as_u32()
+                    }
+                }
+            }
         }
     }
 }
