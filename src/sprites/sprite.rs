@@ -21,4 +21,14 @@ impl Sprite {
             origin: origin,
         }
     }
+
+    pub fn fill(&mut self, color: Color) {
+        for i in 0..self.grid.len() {
+            self.grid[i] = color.clone();
+        }
+    }
+
+    pub fn translate(&mut self, v: Vector2d) {
+        self.origin += v;
+    }
 }

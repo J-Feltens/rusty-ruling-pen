@@ -58,64 +58,56 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let world_origin = Vector2d {
         x: (0.0),
-        y: (300.0),
+        y: (500.0),
     };
 
-    // quick and dirty static sprite
-    while window.is_open() && !window.is_key_down(Key::Enter) {
-        let mut c = Circle::new(100.0, magenta.clone());
+    let mut stack = Vec::<Circle>::new();
 
-        canvas.draw_sprite(c.sprite);
-
-        window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
+    for i in 1..5 {
+        let mut new_circle: Circle = Circle::new(20.0, black.clone());
+        new_circle.sprite.translate(Vector2d {
+            x: world_origin.x,
+            y: world_origin.y - i as f64 * 20.0,
+        });
+        stack.push(new_circle);
     }
-    // let mut stack = Vec::<Circle>::new();
 
-    // for i in 1..10 {
-    //     stack.push(Circle::new(50.0, black.clone()));
-    // }
+    let stack_size = stack.len().clone();
 
-    // let stack_size = stack.len().clone();
+    // main loop
+    while window.is_open() && !window.is_key_down(Key::Enter) {
+        if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
+            println!("Mouse position: ({}, {})", mx, my);
+            canvas.fill(white.clone());
 
-    // // main loop
-    // while window.is_open() && !window.is_key_down(Key::Enter) {
-    //     if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
-    //         println!("Mouse position: ({}, {})", mx, my);
+            // initialize new frame buffer (very inefficient, but it will need to make due for now)
+            let mouse_pos: Vector2d = Vector2d {
+                x: (mx as f64),
+                y: (my as f64),
+            };
 
-    //         // initialize new frame buffer (very inefficient, but it will need to make due for now)
-    //         let mut next_canvas = canvas.clone();
+            for (i, circle) in stack.iter_mut().enumerate() {
+                let mut delta_object_mouse =
+                    (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
 
-    //         let mouse_pos: Vector2d = Vector2d {
-    //             x: (mx as f64),
-    //             y: (my as f64),
-    //         };
+                // calc and apply inertia
+                let mut inertia: f64 =
+                    WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
+                if inertia < 0.001 {
+                    inertia = 0.001
+                }
+                delta_object_mouse.scale(inertia);
 
-    //         for (i, circle) in stack.iter_mut().enumerate() {
-    //             let mut delta_object_mouse =
-    //                 (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
+                circle.sprite.translate(delta_object_mouse);
+                canvas.draw_sprite(&circle.sprite);
+            }
 
-    //             // calc and apply inertia
-    //             let mut inertia: f64 =
-    //                 WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
-    //             if inertia < 0.001 {
-    //                 inertia = 0.001
-    //             }
-    //             delta_object_mouse.scale(inertia);
-
-    //             circle.sprite.origin += delta_object_mouse;
-    //             circle.draw_on_buffer(
-    //                 &mut next_canvas.buffer,
-    //                 next_canvas.size_x,
-    //                 next_canvas.size_y,
-    //             );
-    //         }
-
-    //         // render new framebuffer
-    //         window.update_with_buffer(&next_canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
-    //     } else {
-    //         println!("No mouse detected :(");
-    //     };
-    // }
+            // render new framebuffer
+            window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
+        } else {
+            println!("No mouse detected :(");
+        };
+    }
 
     Ok(())
 }

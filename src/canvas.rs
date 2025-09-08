@@ -26,7 +26,7 @@ impl Canvas {
         }
     }
 
-    pub fn draw_sprite(&mut self, sprite: Sprite) {
+    pub fn draw_sprite(&mut self, sprite: &Sprite) {
         for y_idx in 0..sprite.size_y as usize {
             for x_idx in 0..sprite.size_x as usize {
                 let x_target_in_canvas: u32 = sprite.origin.x as u32 + x_idx as u32;
@@ -40,6 +40,12 @@ impl Canvas {
                     }
                 }
             }
+        }
+    }
+
+    pub fn fill(&mut self, color: Color) {
+        for i in 0..self.buffer.len() {
+            self.buffer[i] = color.as_u32();
         }
     }
 }
