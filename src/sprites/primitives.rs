@@ -10,9 +10,10 @@ pub struct Circle {
 impl Circle {
     pub fn new(r: f64, color: Color) -> Circle {
         let mut sprite: Sprite = Sprite::new((r / 2.0) as u32, (r / 2.0) as u32);
-        for y in 0..sprite.size_x {
-            for x in 0..sprite.size_y {
-                let dist: u32 = (x - sprite.size_x / 2).pow(2) + (y - sprite.size_y / 2).pow(2);
+        for y in 0..sprite.size_x as u32 {
+            for x in 0..sprite.size_y as u32 {
+                let dist: u32 = (x as i32 - sprite.size_x as i32 / 2).pow(2) as u32
+                    + (y as i32 - sprite.size_y as i32 / 2).pow(2) as u32;
                 let r_square: u32 = r.powi(2) as u32;
                 if r_square < dist {
                     sprite.grid[(y * sprite.size_y + x) as usize] = color.clone();

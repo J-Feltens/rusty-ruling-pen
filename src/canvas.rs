@@ -1,3 +1,5 @@
+use crate::colors::Color;
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Canvas {
     pub buffer: Vec<u32>,
@@ -7,7 +9,14 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(size_x: u32, size_y: u32) -> Canvas {
-        let buffer: Vec<u32> = vec![0; (size_x * size_y) as usize];
+        let mut buffer: Vec<u32> = vec![0; (size_x * size_y) as usize];
+        for i in 0..(size_x * size_y) as usize {
+            buffer[i] = Color::as_u32(&Color {
+                r: (255),
+                g: (255),
+                b: (255),
+            })
+        }
         Canvas {
             buffer: buffer,
             size_x: size_x,
