@@ -8,11 +8,11 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn new(r: f64, color: Color) -> Circle {
+    pub fn new(r: f64, fg_color: Color, bg_color: Color) -> Circle {
         let d = (r * 2.0).ceil() as usize;
         let mut sprite = Sprite::new(d as u32, d as u32);
+        sprite.fill(bg_color);
 
-        // center of the pixel grid (use -1 so odd/even sizes behave well)
         let cx = (d as f64 - 1.0) / 2.0;
         let cy = (d as f64 - 1.0) / 2.0;
         let r2 = r * r;
@@ -23,8 +23,7 @@ impl Circle {
             for x in 0..d {
                 let dx = x as f64 - cx;
                 if dx * dx + dy * dy <= r2 {
-                    // If Color: Copy, drop .clone()
-                    sprite.grid[row + x] = color.clone();
+                    sprite.grid[row + x] = fg_color.clone();
                 }
             }
         }

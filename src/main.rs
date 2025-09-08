@@ -14,8 +14,8 @@ pub mod sprites;
 pub mod util;
 
 const PI: f64 = 3.14159265359;
-const WOBBLE_FAC_1: f64 = 0.08;
-const WOBBLE_FAC_2: f64 = 5.0;
+const WOBBLE_FAC_1: f64 = 1.0;
+const WOBBLE_FAC_2: f64 = 1.0;
 
 const SIZE_X: u32 = 1000;
 const SIZE_Y: u32 = 600;
@@ -57,17 +57,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     let world_origin = Vector2d {
-        x: (0.0),
-        y: (500.0),
+        x: (500.0),
+        y: (600.0),
     };
 
     let mut stack = Vec::<Circle>::new();
 
-    for i in 1..5 {
-        let mut new_circle: Circle = Circle::new(20.0, black.clone());
+    for i in 1..100 {
+        let mut new_circle: Circle = Circle::new(5.0, magenta.clone(), white.clone());
         new_circle.sprite.translate(Vector2d {
             x: world_origin.x,
-            y: world_origin.y - i as f64 * 20.0,
+            y: world_origin.y - i as f64 * 10.0,
         });
         stack.push(new_circle);
     }
@@ -91,8 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
 
                 // calc and apply inertia
-                let mut inertia: f64 =
-                    WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
+                let mut inertia: f64 = WOBBLE_FAC_1 / (i as f64 * WOBBLE_FAC_2);
                 if inertia < 0.001 {
                     inertia = 0.001
                 }
