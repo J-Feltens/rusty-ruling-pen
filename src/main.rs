@@ -1,27 +1,30 @@
+use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use rand::rand_core::impls::next_u32_via_fill;
+use rand::{Rng, rng};
 use std::process::exit;
 
-use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
-use rand::Rng;
-use rand::rng;
-
-use crate::canvas::HEIGHT;
-use crate::canvas::WIDTH;
+use crate::canvas::Canvas;
 use crate::colors::Color;
-use crate::util::{Object, Stack, Vector2d};
+use crate::sprites::{Circle, Sprite};
+use crate::util::Vector2d;
 
 pub mod canvas;
 pub mod colors;
+pub mod sprites;
 pub mod util;
 
 const PI: f64 = 3.14159265359;
-const WOBBLE_FAC_1: f64 = 0.08;
-const WOBBLE_FAC_2: f64 = 5.0;
+const WOBBLE_FAC_1: f64 = 1.0;
+const WOBBLE_FAC_2: f64 = 1.0;
+
+const SIZE_X: u32 = 1000;
+const SIZE_Y: u32 = 600;
 
 fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
-    for y_ in 0..HEIGHT {
-        for x_ in 0..WIDTH {
+    for y_ in 0..SIZE_X {
+        for x_ in 0..SIZE_Y {
             if (x_ as i64 - x as i64).pow(2) + (y_ as i64 - y as i64).pow(2) < r as i64 {
-                buffer[y_ * WIDTH + x_] = color;
+                buffer[(y_ * SIZE_X + x_) as usize] = color;
             }
         }
     }
@@ -30,82 +33,127 @@ fn draw_circle(buffer: &mut Vec<u32>, x: u32, y: u32, r: u32, color: u32) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::rng();
 
-    let white: Color = Color::from_rgb(255, 255, 255);
-    let black: Color = Color::from_rgb(0, 0, 0);
+    let black: Color = Color { r: 0, g: 0, b: 0 };
+    let white: Color = Color {
+        r: 255,
+        g: 255,
+        b: 255,
+    };
+    let magenta: Color = Color {
+        r: 255,
+        g: 0,
+        b: 255,
+    };
+    let cyan: Color = Color {
+        r: 0,
+        g: 255,
+        b: 255,
+    };
+    let yellow: Color = Color {
+        r: 255,
+        g: 255,
+        b: 0,
+    };
 
     // initialize 32 bit buffer as canvas
-    let mut buffer: Vec<u32> = vec![white.c; canvas::WIDTH * canvas::HEIGHT];
-    for y in 0..canvas::HEIGHT {
-        for x in 0..canvas::WIDTH {
-            buffer[y * canvas::WIDTH + x] = white.c;
-        }
-    }
+    let mut canvas: Canvas = Canvas::new(SIZE_X, SIZE_Y);
 
     // create a window and show the buffer
     let mut window = Window::new(
         "RRP (Rusty Ruling Pen)",
-        canvas::WIDTH,
-        canvas::HEIGHT,
+        SIZE_X as usize,
+        SIZE_Y as usize,
         WindowOptions::default(),
     )?;
 
     let world_origin = Vector2d {
-        x: (0.0),
-        y: (300.0),
+        x: (500.0),
+        y: (600.0),
     };
 
-    let mut stack: Stack = Stack::new();
+    let mut stack = Vec::<Circle>::new();
+    let mut fallings = Vec::<Circle>::new();
 
-    for i in 1..10 {
-        stack.add_object(Object {
-            origin: (world_origin
-                - Vector2d {
-                    x: (0.0),
-                    y: (25.0 * i as f64),
-                }),
-            r: (50.0),
-            color: (black.c),
+    // init fallings
+    let gravity: Vector2d = Vector2d { x: (0.0), y: (2.0) };
+    let mut falling: Circle = Circle::new(50.0, &cyan, &white);
+    falling.sprite.translate(Vector2d { x: 500.0, y: 0.0 });
+    fallings.push(falling);
+
+    for i in 1..100 {
+        let mut new_circle: Circle = Circle::new(5.0, &magenta, &white);
+        new_circle.sprite.translate(Vector2d {
+            x: world_origin.x,
+            y: world_origin.y - i as f64 * 10.0,
         });
+        stack.push(new_circle);
     }
 
-    let stack_size = stack.len().clone();
+    let stack_size = stack.len();
 
     // main loop
     while window.is_open() && !window.is_key_down(Key::Enter) {
         if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
             println!("Mouse position: ({}, {})", mx, my);
+            canvas.fill(&white);
 
             // initialize new frame buffer (very inefficient, but it will need to make due for now)
-            let mut buffer: Vec<u32> = vec![white.c; canvas::WIDTH * canvas::HEIGHT];
-            for y in 0..canvas::HEIGHT {
-                for x in 0..canvas::WIDTH {
-                    buffer[y * canvas::WIDTH + x] = white.c;
-                }
-            }
-
             let mouse_pos: Vector2d = Vector2d {
                 x: (mx as f64),
                 y: (my as f64),
             };
 
-            for (i, obj) in stack.iter_mut().enumerate() {
+            // spawn some new falling
+            if rng.random_bool(0.01) {
+                let mut falling: Circle = Circle::new(50.0, &cyan, &white);
+                falling.sprite.translate(Vector2d {
+                    x: rng.random_range(0.0..500.0),
+                    y: -100.0,
+                });
+                fallings.push(falling);
+            }
+
+            // render falling
+            let mut idxs_to_Be_destroyed: Vec<usize> = Vec::new();
+            if fallings.len() > 0 {
+                for (i, falling) in fallings.iter_mut().enumerate() {
+                    println!(
+                        "x: {}, y: {}",
+                        falling.sprite.origin.x, falling.sprite.origin.x
+                    );
+                    falling.sprite.origin += gravity;
+
+                    // render
+                    canvas.draw_sprite(&falling.sprite);
+                    if falling.sprite.origin.y > (canvas.size_y + falling.sprite.size_y) as f64 {
+                        // destroy if outside of canvas
+                        idxs_to_Be_destroyed.push(i)
+                    }
+                }
+            }
+            for i in idxs_to_Be_destroyed.iter() {
+                fallings.remove(i.clone());
+            }
+            println!("{}", fallings.len());
+
+            // render stack
+            for (i, circle) in stack.iter_mut().enumerate() {
                 let mut delta_object_mouse =
-                    (mouse_pos - obj.origin) * Vector2d { x: (1.0), y: (0.0) };
+                    (mouse_pos - circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
 
                 // calc and apply inertia
-                let mut inertia: f64 =
-                    WOBBLE_FAC_1 * (stack_size as f64 - (i as f64 * WOBBLE_FAC_2).sqrt());
+                let mut inertia: f64 = WOBBLE_FAC_1 / (i as f64 * WOBBLE_FAC_2);
                 if inertia < 0.001 {
                     inertia = 0.001
                 }
                 delta_object_mouse.scale(inertia);
 
-                obj.translate(delta_object_mouse);
-                obj.draw_on_buffer(&mut buffer);
+                circle.sprite.translate(delta_object_mouse);
+                canvas.draw_sprite(&circle.sprite);
             }
 
             // render new framebuffer
-            window.update_with_buffer(&buffer, canvas::WIDTH, canvas::HEIGHT)?;
+            window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
         } else {
             println!("No mouse detected :(");
         };

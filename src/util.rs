@@ -1,7 +1,6 @@
 use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::canvas::HEIGHT;
-use crate::canvas::WIDTH;
+use crate::canvas::Canvas;
 
 /*
     Some simple vector utilites to kick it off
@@ -117,72 +116,5 @@ impl MulAssign<Vector2d> for Vector2d {
     fn mul_assign(&mut self, v: Vector2d) {
         self.x *= v.x;
         self.y *= v.y;
-    }
-}
-
-/*
-    An Object represents some sort of renderable, be it a circle, rectangle or, in the future, graphic
-*/
-#[derive(Debug)]
-pub struct Object {
-    pub origin: Vector2d,
-    pub r: f64,
-    pub color: u32,
-}
-
-impl Object {
-    pub fn new(origin: Vector2d, r: f64, color: u32) -> Object {
-        Object {
-            origin: origin,
-            r: r,
-            color: color,
-        }
-    }
-
-    pub fn set_origin(&mut self, vector: Vector2d) {
-        self.origin = vector;
-    }
-
-    pub fn translate(&mut self, vector: Vector2d) {
-        self.origin += vector;
-    }
-
-    pub fn draw_on_buffer(&self, buffer: &mut Vec<u32>) {
-        // draw a circle for starters
-        for y_ in 0..HEIGHT {
-            for x_ in 0..WIDTH {
-                if (x_ as i64 - self.origin.x as i64).pow(2)
-                    + (y_ as i64 - self.origin.y as i64).pow(2)
-                    < self.r as i64
-                {
-                    buffer[y_ * WIDTH + x_] = self.color;
-                }
-            }
-        }
-    }
-}
-
-pub struct Stack {
-    pub stack: Vec<Object>,
-}
-
-impl Stack {
-    pub fn new() -> Stack {
-        Stack { stack: Vec::new() }
-    }
-
-    pub fn add_object(&mut self, obj: Object) {
-        self.stack.push(obj);
-    }
-    pub fn len(&self) -> usize {
-        self.stack.len()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Object> {
-        self.stack.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Object> {
-        self.stack.iter_mut()
     }
 }
