@@ -37,7 +37,7 @@ impl Canvas {
                 if 0.0 < x_target_in_canvas && x_target_in_canvas < self.size_x as f64 {
                     if 0.0 < y_target_in_canvas && y_target_in_canvas < self.size_y as f64 {
                         // very simple alpha channel only displaying alpha = 1.0 and higher
-                        if sprite.grid[y_idx * sprite.size_x as usize + x_idx].a >= 1.0 {
+                        if sprite.grid[y_idx * sprite.size_x as usize + x_idx].a == 1.0 {
                             // assign pixel value in sprite to pixel value in canvas
                             self.buffer[(y_target_in_canvas * self.size_x as f64
                                 + x_target_in_canvas)
