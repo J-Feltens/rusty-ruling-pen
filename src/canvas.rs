@@ -42,7 +42,7 @@ impl Canvas {
         }
     }
 
-    pub fn fill(&mut self, color: Color) {
+    pub fn fill(&mut self, color: &Color) {
         for i in 0..self.buffer.len() {
             self.buffer[i] = color.as_u32();
         }

@@ -1,4 +1,4 @@
-use crate::{colors::Color, util::Vector2d};
+use crate::{canvas::Canvas, colors::Color, util::Vector2d};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 
@@ -22,7 +22,7 @@ impl Sprite {
         }
     }
 
-    pub fn fill(&mut self, color: Color) {
+    pub fn fill(&mut self, color: &Color) {
         for i in 0..self.grid.len() {
             self.grid[i] = color.clone();
         }
@@ -30,5 +30,12 @@ impl Sprite {
 
     pub fn translate(&mut self, v: Vector2d) {
         self.origin += v;
+    }
+
+    pub fn is_on_canvas(&self, canvas: &Canvas) -> bool {
+        return 0.0 <= self.origin.x
+            && self.origin.x < canvas.size_x as f64
+            && 0.0 <= self.origin.y
+            && self.origin.y < canvas.size_y as f64;
     }
 }

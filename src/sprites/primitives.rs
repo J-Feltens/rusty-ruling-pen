@@ -8,7 +8,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn new(r: f64, fg_color: Color, bg_color: Color) -> Circle {
+    pub fn new(r: f64, fg_color: &Color, bg_color: &Color) -> Circle {
         let d = (r * 2.0).ceil() as usize;
         let mut sprite = Sprite::new(d as u32, d as u32);
         sprite.fill(bg_color);
