@@ -64,7 +64,7 @@ impl Canvas {
         }
     }
 
-    pub fn draw_crosshair(&mut self, target: Vector2d) {
+    pub fn draw_crosshair(&mut self, target: &Vector2d) {
         let target_x = target.x as u32;
         let target_y = target.y as u32;
         for y in 0..self.size_y {

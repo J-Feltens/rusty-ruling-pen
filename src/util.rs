@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 use crate::canvas::Canvas;
 
@@ -39,7 +39,7 @@ impl Vector2d {
     }
 
     pub fn length(&self) -> f64 {
-        return ((self.x * self.x) + (self.y + self.y)).sqrt();
+        return ((self.x * self.x) + (self.y * self.y)).sqrt();
     }
 }
 
@@ -100,6 +100,26 @@ impl MulAssign<f64> for Vector2d {
     fn mul_assign(&mut self, rhs: f64) {
         self.x *= rhs;
         self.y *= rhs;
+    }
+}
+
+// v / scalar
+impl Div<f64> for Vector2d {
+    type Output = Vector2d;
+
+    fn div(self, rhs: f64) -> Vector2d {
+        Vector2d {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
+// v /= scalar
+impl DivAssign<f64> for Vector2d {
+    fn div_assign(&mut self, rhs: f64) {
+        self.x /= rhs;
+        self.y /= rhs;
     }
 }
 

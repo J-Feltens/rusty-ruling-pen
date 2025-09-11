@@ -16,19 +16,13 @@ pub mod game;
 pub mod sprites;
 pub mod util;
 
-const TARGET_FPS: u32 = 100;
-
-const WOBBLE_FAC_1: f64 = 0.5;
-const WOBBLE_FAC_2: f64 = 2.0;
-
-const GRAVITY: Vector2d = Vector2d { x: (0.0), y: (0.5) };
-const COLLISION_RADIUS: f64 = 1.0;
+const TARGET_FPS: u32 = 1000;
 
 const SIZE_X: u32 = 1000;
 const SIZE_Y: u32 = 600;
 
-const RADIUS: f64 = 50.0;
-
+// the quick'n dirty
+// fn main() {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut game = Game::new(SIZE_X, SIZE_Y, TARGET_FPS);
 

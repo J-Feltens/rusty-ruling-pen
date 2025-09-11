@@ -45,4 +45,16 @@ impl Circle {
     pub fn translate_xy(&mut self, x: f64, y: f64) {
         self.sprite.translate_xy(x, y);
     }
+
+    pub fn get_origin(&self) -> Vector2d {
+        return self.sprite.origin;
+    }
+
+    pub fn get_center(&self) -> Vector2d {
+        return self.sprite.origin
+            + Vector2d {
+                x: self.sprite.size_x as f64 / 2.0,
+                y: self.sprite.size_y as f64 / 2.0,
+            };
+    }
 }
