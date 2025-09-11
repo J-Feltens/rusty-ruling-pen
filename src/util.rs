@@ -37,6 +37,10 @@ impl Vector2d {
         self.x = x;
         self.y = y;
     }
+
+    pub fn length(&self) -> f64 {
+        return ((self.x * self.x) + (self.y + self.y)).sqrt();
+    }
 }
 
 // v1 + v2
