@@ -64,6 +64,15 @@ impl Game {
             if let Some((mx, my)) = self.windows[0].get_mouse_pos(MouseMode::Clamp) {
                 canvas.fill(&WHITE);
 
+                // collision
+                if self.players[0]
+                    .sprite
+                    .distance_to_sprite(&self.circles[0].sprite)
+                    < 10.0
+                {
+                    exit(0)
+                }
+
                 // simple wasd movement for player
                 if self.windows[0].is_key_down(Key::W) {
                     self.players[0].translate_xy(0.0, -10.0);
