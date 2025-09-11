@@ -14,22 +14,25 @@ pub mod colors;
 pub mod sprites;
 pub mod util;
 
+const TARGET_FPS: f64 = 100.0;
+const TARGET_INTERVAL_MS: u128 = (1000.0 / TARGET_FPS) as u128;
+
 const WOBBLE_FAC_1: f64 = 0.5;
 const WOBBLE_FAC_2: f64 = 2.0;
 
 const GRAVITY: Vector2d = Vector2d { x: (0.0), y: (0.5) };
-const COLLISION_RADIUS: f64 = 5.0;
+const COLLISION_RADIUS: f64 = 1.0;
 
 const SIZE_X: u32 = 1000;
 const SIZE_Y: u32 = 600;
 
-const RADIUS: f64 = 20.0;
+const RADIUS: f64 = 50.0;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::rng();
 
     // for fps
-    let mut last_time_in_milliseconds = cur_time_in_milliseconds().unwrap();
+    let mut last_time_ms = cur_time_in_milliseconds().unwrap();
 
     // initialize 32 bit buffer as canvas
     let mut canvas: Canvas = Canvas::new(SIZE_X, SIZE_Y);
@@ -50,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut new_circle: Circle = Circle::new(RADIUS, &MAGENTA);
         new_circle.sprite.origin = Vector2d {
             x: (500.0),
-            y: (400.0),
+            y: ((SIZE_Y / 2) as f64),
         };
         // translate according to stack index and stack origin
         new_circle.sprite.origin.y += -i as f64 * 2.0 * RADIUS;
@@ -61,7 +64,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut frame: u128 = 0;
     while window.is_open() && !window.is_key_down(Key::Enter) {
         if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
-            println!("");
             canvas.fill(&WHITE);
 
             let mouse_pos: Vector2d = Vector2d {
@@ -152,16 +154,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("No mouse detected :(");
         };
 
-        // calc fps
-        let cur_time = cur_time_in_milliseconds().unwrap() as u128;
-        let fps = 1000.0 / (cur_time - last_time_in_milliseconds as u128) as f64;
-        println!("FPS: {}", fps);
-        last_time_in_milliseconds = cur_time;
-        println!("Frame: {}", frame);
+        // sleep to stay within target fps
+        let cur_time_ms = cur_time_in_milliseconds().unwrap() as u128;
+        let time_diff_ms = cur_time_ms - last_time_ms;
+        if TARGET_INTERVAL_MS > time_diff_ms {
+            thread::sleep(time::Duration::from_millis(
+                TARGET_INTERVAL_MS as u64 - time_diff_ms as u64,
+            ));
+        }
+        print!("{}[2J", 27 as char);
 
+        // calc and display fps
+        let cur_time_ms = cur_time_in_milliseconds().unwrap() as u128;
+        let fps = 1000.0 / (cur_time_ms - last_time_ms as u128) as f64;
+        println!("FPS: {}", fps);
+
+        println!("Frame: {}", frame);
+        frame += 1;
+        last_time_ms = cur_time_ms;
         // uncomment for single frame exec
         // exit(0);
-        frame += 1;
     }
 
     Ok(())

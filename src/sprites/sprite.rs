@@ -48,7 +48,17 @@ impl Sprite {
     }
 
     pub fn distance_to_sprite(&self, sprite: &Sprite) -> f64 {
-        let distance: f64 = (self.origin - sprite.origin).length();
+        let distance: f64 = ((self.origin
+            + Vector2d {
+                x: self.size_x as f64 / 2.0,
+                y: self.size_y as f64 / 2.0,
+            })
+            - (sprite.origin
+                + Vector2d {
+                    x: sprite.size_x as f64 / 2.0,
+                    y: sprite.size_y as f64 / 2.0,
+                }))
+        .length();
         return distance;
     }
 }
