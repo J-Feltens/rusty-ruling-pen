@@ -1,4 +1,5 @@
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use rand::rngs::ThreadRng;
 use rand::{Rng, rng};
 use std::process::exit;
 use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
@@ -19,6 +20,7 @@ pub struct Game {
     fallings: Vec<Circle>,
     players: Vec<Circle>,
     windows: Vec<Window>,
+    rng: ThreadRng,
 }
 
 impl Game {
@@ -31,6 +33,7 @@ impl Game {
             fallings: Vec::new(),
             players: Vec::new(),
             windows: Vec::new(),
+            rng: 
         }
     }
 
@@ -130,7 +133,7 @@ impl Game {
 
     pub fn spawn_falling(&mut self) {
         let mut circle = Circle::new(100.0, &MAGENTA);
-        circle.set_origin_xy(400.0, 200.0);
+        circle.set_origin_xy(self.rng.random_range(0.0..500.0), 100.0);
         self.fallings.push(circle);
     }
 
