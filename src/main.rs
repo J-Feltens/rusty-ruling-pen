@@ -2,6 +2,7 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use rand::{Rng, rng};
 use std::process::exit;
 use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
+use std::{thread, time};
 
 use crate::canvas::Canvas;
 use crate::colors::{BLACK, CYAN, Color, MAGENTA, TRANSPARENT, WHITE, YELLOW};
