@@ -16,7 +16,7 @@ pub struct Game {
     target_fps: u32,
     target_interval_ms: u128,
 
-    circles: Vec<Circle>,
+    fallings: Vec<Circle>,
     players: Vec<Circle>,
     windows: Vec<Window>,
 }
@@ -28,14 +28,13 @@ impl Game {
             y_size: y_size,
             target_fps: target_fps,
             target_interval_ms: (1000 / target_fps) as u128,
-            circles: Vec::new(),
+            fallings: Vec::new(),
             players: Vec::new(),
             windows: Vec::new(),
         }
     }
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut circle = Circle::new(100.0, &MAGENTA);
         let mut player = Circle::new(100.0, &CYAN);
         self.players.push(player);
 
@@ -46,9 +45,6 @@ impl Game {
             WindowOptions::default(),
         )?;
         self.windows.push(window);
-
-        circle.set_origin_xy(400.0, 200.0);
-        self.circles.push(circle);
         Ok(())
     }
 
@@ -67,7 +63,7 @@ impl Game {
                 // collision
                 if self.players[0]
                     .sprite
-                    .distance_to_sprite(&self.circles[0].sprite)
+                    .distance_to_sprite(&self.fallings[0].sprite)
                     < 10.0
                 {
                     exit(0)
@@ -87,14 +83,14 @@ impl Game {
                     self.players[0].translate_xy(10.0, 0.0);
                 }
 
-                canvas.draw_sprite(&self.circles[0].sprite);
+                canvas.draw_sprite(&self.fallings[0].sprite);
                 canvas.draw_sprite(&self.players[0].sprite);
                 let mouse_pos: Vector2d = Vector2d {
                     x: (mx as f64),
                     y: (my as f64),
                 };
 
-                canvas.draw_crosshair(self.circles[0].sprite.origin);
+                canvas.draw_crosshair(self.fallings[0].sprite.origin);
                 canvas.draw_crosshair(self.players[0].sprite.origin);
 
                 // render new framebuffer
@@ -130,6 +126,12 @@ impl Game {
         }
 
         Ok(())
+    }
+
+    pub fn spawn_falling(&mut self) {
+        let mut circle = Circle::new(100.0, &MAGENTA);
+        circle.set_origin_xy(400.0, 200.0);
+        self.fallings.push(circle);
     }
 
     fn cur_time_in_milliseconds() -> Result<u128, SystemTimeError> {
