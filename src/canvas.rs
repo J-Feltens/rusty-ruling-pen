@@ -63,4 +63,26 @@ impl Canvas {
             self.buffer[i] = color.as_u32();
         }
     }
+
+    pub fn draw_crosshair(&mut self, target: Vector2d) {
+        let target_x = target.x as u32;
+        let target_y = target.y as u32;
+        for y in 0..self.size_y {
+            for x in 0..self.size_x {
+                if x == target_x || y == target_y {
+                    self.buffer[(y * self.size_x + x) as usize] = 0;
+                }
+            }
+        }
+    }
+
+    pub fn draw_crosshair_xy(&mut self, target_x: u32, target_y: u32) {
+        for y in 0..self.size_y {
+            for x in 0..self.size_x {
+                if x == target_x || y == target_y {
+                    self.buffer[(y * self.size_x + x) as usize] = 0;
+                }
+            }
+        }
+    }
 }

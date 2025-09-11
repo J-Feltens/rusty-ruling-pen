@@ -40,6 +40,11 @@ impl Sprite {
         self.origin += v;
     }
 
+    pub fn translate_xy(&mut self, x: f64, y: f64) {
+        self.origin.x += x;
+        self.origin.y += y;
+    }
+
     pub fn is_on_canvas(&self, canvas: &Canvas) -> bool {
         return 0.0 <= self.origin.x
             && self.origin.x < canvas.size_x as f64

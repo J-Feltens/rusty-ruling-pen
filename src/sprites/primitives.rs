@@ -28,4 +28,21 @@ impl Circle {
         }
         Circle { sprite: (sprite) }
     }
+
+    pub fn set_origin(&mut self, origin: Vector2d) {
+        self.sprite.origin = origin;
+    }
+
+    pub fn set_origin_xy(&mut self, x: f64, y: f64) {
+        self.sprite.origin.x = x;
+        self.sprite.origin.y = y;
+    }
+
+    pub fn translate(&mut self, vec: Vector2d) {
+        self.sprite.translate(vec);
+    }
+
+    pub fn translate_xy(&mut self, x: f64, y: f64) {
+        self.sprite.translate_xy(x, y);
+    }
 }
