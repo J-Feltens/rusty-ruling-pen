@@ -22,3 +22,40 @@ impl Color {
         ((self.r as u32) << 16) | ((self.g as u32) << 8) | (self.b as u32)
     }
 }
+
+pub const TRANSPARENT: Color = Color {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0.0,
+};
+pub const BLACK: Color = Color {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 1.0,
+};
+pub const WHITE: Color = Color {
+    r: 255,
+    g: 255,
+    b: 255,
+    a: 1.0,
+};
+pub const MAGENTA: Color = Color {
+    r: 255,
+    g: 0,
+    b: 255,
+    a: 1.0,
+};
+pub const CYAN: Color = Color {
+    r: 0,
+    g: 255,
+    b: 255,
+    a: 1.0,
+};
+pub const YELLOW: Color = Color {
+    r: 255,
+    g: 255,
+    b: 0,
+    a: 1.0,
+};

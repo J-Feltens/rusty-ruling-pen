@@ -46,4 +46,9 @@ impl Sprite {
             && 0.0 <= self.origin.y
             && self.origin.y < canvas.size_y as f64;
     }
+
+    pub fn distance_to_sprite(&self, sprite: &Sprite) -> f64 {
+        let distance: f64 = (self.origin - sprite.origin).length();
+        return distance;
+    }
 }

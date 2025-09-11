@@ -1,5 +1,6 @@
 use crate::colors::Color;
 use crate::sprites::Sprite;
+use crate::util::Vector2d;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Canvas {
