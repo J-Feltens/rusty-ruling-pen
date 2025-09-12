@@ -38,13 +38,15 @@ impl Game {
             players: Vec::new(),
             windows: Vec::new(),
             rng: rand::rng(),
-            gravity: Vector2d { x: 0.0, y: 2.0 },
+            gravity: Vector2d { x: 0.0, y: 1.0 },
         }
     }
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut player = Circle::new(RADIUS, &CYAN);
-        self.players.push(player);
+        for i in 0..5 {
+            let mut player = Circle::new(RADIUS, &CYAN);
+            self.players.push(player);
+        }
 
         let mut window = Window::new(
             "RRP (Rusty Ruling Pen)",
@@ -84,7 +86,9 @@ impl Game {
                     }
                 }
                 for i in falling_idxs_to_be_removed {
-                    self.fallings.remove(i);
+                    if i < self.fallings.len() {
+                        self.fallings.remove(i);
+                    }
                 }
 
                 // simple wasd movement for player
@@ -103,15 +107,18 @@ impl Game {
 
                 // simple cursor for player
                 let stack_root = self.players[0].get_origin();
+                self.players[0].set_origin(mouse_pos - stack_root);
                 for (i, player) in self.players.iter_mut().enumerate() {
                     if i == 0 {
-                        player.set_origin(mouse_pos);
+                        continue;
                     } else {
                         // stack offset
-                        player.set_origin(stack_root);
-                        player.translate_xy(0.0, -RADIUS * 2.0 * i as f64);
-                        let d_mouse: Vector2d =
-                            (mouse_pos - player.get_center()) / (2.0 + (200.0 * i as f64));
+                        // player.set_origin(stack_root);
+                        // player.translate_xy(0.0, -RADIUS * 2.0 * i as f64);
+                        // let d_mouse: Vector2d =
+                        //     (mouse_pos - player.get_center()) / (2.0 + (200.0 * i as f64));
+                        player.sprite.set_target_pos(mouse_pos);
+                        player.sprite.move_towards_target(0.01);
                     }
                     println!(
                         "Player {} pos: {}, {}",
@@ -122,9 +129,9 @@ impl Game {
                 }
 
                 // spawn new falling
-                if self.rng.random_bool(0.01) {
-                    self.spawn_falling();
-                }
+                // if self.rng.random_bool(0.01) {
+                //     self.spawn_falling();
+                // }
 
                 // apply gravity on falling
                 for falling in self.fallings.iter_mut() {
