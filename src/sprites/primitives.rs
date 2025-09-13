@@ -31,6 +31,7 @@ impl Circle {
                 }
             }
         }
+        sprite.recalc_pixel_idxs();
         Circle {
             sprite: sprite,
             color: fg_color.clone(),
