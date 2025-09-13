@@ -1,4 +1,4 @@
-use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 use rand::rngs::ThreadRng;
 use rand::{Rng, rng};
 use std::process::exit;
@@ -10,7 +10,9 @@ use crate::colors::{BLACK, CYAN, Color, MAGENTA, TRANSPARENT, WHITE, YELLOW};
 use crate::sprites::{Circle, Sprite};
 use crate::util::Vector2d;
 
-const RADIUS: f64 = 50.0;
+const RADIUS: f64 = 30.0;
+const Y_LEVEL: f64 = 300.0;
+const COLORS: [Color; 3] = [CYAN, YELLOW, MAGENTA];
 
 #[derive(Debug)]
 pub struct Game {
@@ -23,6 +25,7 @@ pub struct Game {
 
     fallings: Vec<Circle>,
     players: Vec<Circle>,
+    stack_root: f64,
     windows: Vec<Window>,
     rng: ThreadRng,
 }
@@ -38,12 +41,13 @@ impl Game {
             players: Vec::new(),
             windows: Vec::new(),
             rng: rand::rng(),
-            gravity: Vector2d { x: 0.0, y: 1.0 },
+            gravity: Vector2d { x: 0.0, y: 3.0 },
+            stack_root: Y_LEVEL,
         }
     }
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        for i in 0..5 {
+        for i in 0..2 {
             let mut player = Circle::new(RADIUS, &CYAN);
             self.players.push(player);
         }
@@ -76,13 +80,36 @@ impl Game {
                     y: (mouse_y as f64),
                 };
 
+                // scroll stack down
+                if self.players[self.players.len() - 1].get_origin().y < Y_LEVEL {
+                    println!("Movin down");
+                    self.stack_root += 1.0;
+                }
+
+                // manual stack increase for debug purposes
+                if self.windows[0].is_key_pressed(Key::C, KeyRepeat::No) {
+                    let new_stacked: Circle = Circle::new(RADIUS, &MAGENTA);
+                    self.players.push(new_stacked);
+                }
+
                 // collision
                 let mut falling_idxs_to_be_removed: Vec<usize> = Vec::new();
                 for (i, falling) in self.fallings.iter().enumerate() {
                     if Game::is_collision(&self.players[self.players.len() - 1], &falling) {
-                        falling_idxs_to_be_removed.push(i);
-                        let new_stacked: Circle = falling.clone();
-                        self.players.push(new_stacked);
+                        {
+                            // collision detected, time to decide if good or bad
+                            if falling.color.as_u32() == MAGENTA.as_u32() {
+                                // good collision
+                                falling_idxs_to_be_removed.push(i);
+                                let new_stacked: Circle = falling.clone();
+                                self.players.push(new_stacked);
+                            } else {
+                                // bad collision
+                                while self.players.len() > 2 {
+                                    self.players.pop();
+                                }
+                            }
+                        }
                     }
                 }
                 for i in falling_idxs_to_be_removed {
@@ -106,32 +133,32 @@ impl Game {
                 // }
 
                 // simple cursor for player
-                let stack_root = self.players[0].get_origin();
-                self.players[0].set_origin(mouse_pos - stack_root);
                 for (i, player) in self.players.iter_mut().enumerate() {
-                    if i == 0 {
-                        continue;
-                    } else {
-                        // stack offset
-                        // player.set_origin(stack_root);
-                        // player.translate_xy(0.0, -RADIUS * 2.0 * i as f64);
-                        // let d_mouse: Vector2d =
-                        //     (mouse_pos - player.get_center()) / (2.0 + (200.0 * i as f64));
-                        player.sprite.set_target_pos(mouse_pos);
-                        player.sprite.move_towards_target(0.01);
-                    }
-                    println!(
-                        "Player {} pos: {}, {}",
-                        i,
-                        player.get_origin().x,
-                        player.get_origin().y
-                    );
+                    // stack offset
+                    player.sprite.origin.y = self.stack_root - RADIUS * 2.0 * i as f64;
+
+                    let mut delta_object_mouse =
+                        (mouse_pos - player.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
+
+                    // calc and apply inertia
+                    let inertia: f64 = 1.0 / (i as f64 * 5.0);
+                    delta_object_mouse.scale(inertia);
+
+                    player.sprite.translate(delta_object_mouse);
+                    canvas.draw_sprite(&player.sprite);
+                    // println!(
+                    //     "Player {} pos: {}, {}",
+                    //     i,
+                    //     player.get_origin().x,
+                    //     player.get_origin().y
+                    // );
                 }
+                println!("Stacksize: {}", self.players.len());
 
                 // spawn new falling
-                // if self.rng.random_bool(0.01) {
-                //     self.spawn_falling();
-                // }
+                if self.rng.random_bool(0.01) {
+                    self.spawn_falling();
+                }
 
                 // apply gravity on falling
                 for falling in self.fallings.iter_mut() {
@@ -185,7 +212,7 @@ impl Game {
     }
 
     pub fn spawn_falling(&mut self) {
-        let mut circle = Circle::new(RADIUS, &MAGENTA);
+        let mut circle = Circle::new(RADIUS, &COLORS[self.rng.random_range(0..COLORS.len())]);
         circle.set_origin_xy(self.rng.random_range(0.0..self.y_size as f64), -100.0);
         self.fallings.push(circle);
     }
@@ -200,16 +227,18 @@ impl Game {
 
     pub fn is_collision(player: &Circle, falling: &Circle) -> bool {
         if player.sprite.distance_to_sprite(&falling.sprite) < RADIUS * 2.0 {
-            println!("\n\n\n Collision detected!!!");
-            println!(
-                "player: {}, {}",
-                player.sprite.origin.x, player.sprite.origin.y
-            );
-            println!(
-                "circle: {}, {}",
-                falling.sprite.origin.x, falling.sprite.origin.y
-            );
-            return true;
+            if falling.get_origin().y < player.get_origin().y {
+                println!("\n\n\n Collision detected!!!");
+                println!(
+                    "player: {}, {}",
+                    player.sprite.origin.x, player.sprite.origin.y
+                );
+                println!(
+                    "circle: {}, {}",
+                    falling.sprite.origin.x, falling.sprite.origin.y
+                );
+                return true;
+            }
         }
         return false;
     }
