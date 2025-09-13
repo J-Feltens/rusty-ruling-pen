@@ -53,11 +53,11 @@ impl Game {
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         for i in 0..2 {
-            let mut player = Circle::new(RADIUS, &CYAN);
+            let player = Circle::new(RADIUS, &CYAN);
             self.players.push(player);
         }
 
-        let mut window = Window::new(
+        let window = Window::new(
             "RRP (Rusty Ruling Pen)",
             self.x_size as usize,
             self.y_size as usize,
@@ -216,13 +216,13 @@ impl Game {
             };
 
             // sleep to stay within target fps
-            // let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
-            // let time_diff_ms = cur_time_ms - last_time_ms;
-            // if self.target_interval_ms > time_diff_ms {
-            //     thread::sleep(time::Duration::from_millis(
-            //         self.target_interval_ms as u64 - time_diff_ms as u64,
-            //     ));
-            // }
+            let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
+            let time_diff_ms = cur_time_ms - last_time_ms;
+            if self.target_interval_ms > time_diff_ms {
+                thread::sleep(time::Duration::from_millis(
+                    self.target_interval_ms as u64 - time_diff_ms as u64,
+                ));
+            }
 
             // calc and display fps
             let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
