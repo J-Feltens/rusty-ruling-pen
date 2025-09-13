@@ -8,7 +8,9 @@ pub struct Sprite {
     pub grid: Vec<Color>,
 
     pub origin: Vector2d,
-    pub target_pos: Vector2d,
+    // the following variable contains a tuple of x- and y-indexes which specify which pixels
+    // of grid are visible (not alpha = 0.0) for more efficient rendering
+    pub pixel_idxs: Vec<(usize, usize)>,
 }
 
 impl Sprite {
@@ -23,13 +25,31 @@ impl Sprite {
             (size_x * size_y) as usize
         ];
         let origin: Vector2d = Vector2d { x: (0.0), y: (0.0) };
+        let mut pixel_idxs = vec![(0 as usize, 0 as usize); (size_x * size_y) as usize];
+        for y in 0..size_y as usize {
+            for x in 0..size_x as usize {
+                pixel_idxs[y * size_x as usize + x] = (x, y);
+            }
+        }
         Sprite {
             size_x: (size_x),
             size_y: (size_y),
             grid: grid,
             origin: origin,
-            target_pos: origin,
+            pixel_idxs: pixel_idxs,
         }
+    }
+
+    pub fn recalc_pixel_idxs(&mut self) {
+        let mut pixel_idxs: Vec<(usize, usize)> = Vec::new();
+        for y in 0..self.size_y as usize {
+            for x in 0..self.size_x as usize {
+                if self.grid[y * self.size_x as usize + x].a == 1.0 {
+                    pixel_idxs.push((x, y));
+                }
+            }
+        }
+        self.pixel_idxs = pixel_idxs;
     }
 
     pub fn fill(&mut self, color: &Color) {
@@ -67,22 +87,5 @@ impl Sprite {
                 }))
         .length();
         return distance;
-    }
-
-    pub fn set_target_pos(&mut self, target_pos: Vector2d) {
-        self.target_pos = target_pos;
-    }
-
-    pub fn move_towards_target(&mut self, factor: f64) {
-        if factor < 0.0 || factor > 1.0 {
-            println!(
-                "Factor for 'move_towards_target' should be in [0.0 ... 1.0], got {}",
-                factor
-            );
-            return;
-        }
-
-        let d_target: Vector2d = self.target_pos - self.origin;
-        self.translate(d_target);
     }
 }

@@ -1,6 +1,10 @@
 use std::thread::spawn;
 
-use crate::{colors::Color, sprites::Sprite, util::Vector2d};
+use crate::{
+    colors::{BLACK, Color},
+    sprites::Sprite,
+    util::Vector2d,
+};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Circle {
@@ -27,6 +31,7 @@ impl Circle {
                 }
             }
         }
+        sprite.recalc_pixel_idxs();
         Circle {
             sprite: sprite,
             color: fg_color.clone(),
@@ -63,13 +68,44 @@ impl Circle {
     }
 }
 
+#[derive(Debug)]
 pub struct Frame {
-    size_x: f64,
-    size_y: f64,
-    thickness: f64,
-    color: Color,
+    pub sprite: Sprite,
+    pub thickness: u32,
+    pub color: Color,
 }
 
 impl Frame {
-    pub fn new(size_x: f64, size_y: f64, thickness: f64, color: Color) -> Frame {}
+    pub fn new(size_x: u32, size_y: u32, thickness: u32, color: Color) -> Frame {
+        let mut sprite: Sprite = Sprite::new(size_x, size_y);
+
+        for y in 0..size_y {
+            for x in 0..size_x {
+                if x < 0 + thickness
+                    || x > size_x - thickness
+                    || y < 0 + thickness
+                    || y > size_y - thickness
+                {
+                    sprite.grid[(y * size_x + x) as usize] = color.clone();
+                }
+            }
+        }
+
+        Frame {
+            sprite: sprite,
+            thickness: thickness,
+            color: color,
+        }
+    }
+
+    pub fn set_color(&mut self, color: &Color) {
+        self.color = color.clone();
+        for y in 0..self.sprite.size_y {
+            for x in 0..self.sprite.size_x {
+                if self.sprite.grid[(y * self.sprite.size_x + x) as usize].a == 1.0 {
+                    self.sprite.grid[(y * self.sprite.size_x + x) as usize] = color.clone();
+                }
+            }
+        }
+    }
 }
