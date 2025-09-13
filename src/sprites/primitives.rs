@@ -5,6 +5,7 @@ use crate::{colors::Color, sprites::Sprite, util::Vector2d};
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Circle {
     pub sprite: Sprite,
+    pub color: Color,
 }
 
 impl Circle {
@@ -26,6 +27,49 @@ impl Circle {
                 }
             }
         }
-        Circle { sprite: (sprite) }
+        Circle {
+            sprite: sprite,
+            color: fg_color.clone(),
+        }
     }
+
+    pub fn set_origin(&mut self, origin: Vector2d) {
+        self.sprite.origin = origin;
+    }
+
+    pub fn set_origin_xy(&mut self, x: f64, y: f64) {
+        self.sprite.origin.x = x;
+        self.sprite.origin.y = y;
+    }
+
+    pub fn translate(&mut self, vec: Vector2d) {
+        self.sprite.translate(vec);
+    }
+
+    pub fn translate_xy(&mut self, x: f64, y: f64) {
+        self.sprite.translate_xy(x, y);
+    }
+
+    pub fn get_origin(&self) -> Vector2d {
+        return self.sprite.origin;
+    }
+
+    pub fn get_center(&self) -> Vector2d {
+        return self.sprite.origin
+            + Vector2d {
+                x: self.sprite.size_x as f64 / 2.0,
+                y: self.sprite.size_y as f64 / 2.0,
+            };
+    }
+}
+
+pub struct Frame {
+    size_x: f64,
+    size_y: f64,
+    thickness: f64,
+    color: Color,
+}
+
+impl Frame {
+    pub fn new(size_x: f64, size_y: f64, thickness: f64, color: Color) -> Frame {}
 }
