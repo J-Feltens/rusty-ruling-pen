@@ -65,6 +65,7 @@ impl Game {
         self.windows.push(window);
 
         let mut frame: Frame = Frame::new(SIZE_X, SIZE_Y, 10, CYAN);
+        frame.sprite.recalc_pixel_idxs();
         self.frames.push(frame);
 
         Ok(())
@@ -252,8 +253,23 @@ impl Game {
     }
 
     pub fn spawn_falling(&mut self) {
-        let mut circle = Circle::new(RADIUS, &COLORS[self.rng.random_range(0..COLORS.len())]);
-        circle.set_origin_xy(self.rng.random_range(0.0..self.y_size as f64), -100.0);
+        let color = &COLORS[self.rng.random_range(0..COLORS.len())];
+        let mut new_origin = Vector2d::new(self.rng.random_range(0.0..self.y_size as f64), -100.0);
+        for i in 0..100 {
+            let mut shortest_dist: f64 = 99999.9;
+            for falling in self.fallings.iter() {
+                let dist = (falling.sprite.origin - new_origin).length();
+                if dist < shortest_dist {
+                    shortest_dist = dist;
+                }
+            }
+            if shortest_dist < RADIUS * 4.0 {
+                new_origin = Vector2d::new(self.rng.random_range(0.0..self.y_size as f64), -100.0);
+            }
+        }
+
+        let mut circle = Circle::new(RADIUS, color);
+        circle.set_origin(new_origin);
         self.fallings.push(circle);
     }
 
