@@ -8,7 +8,7 @@ pub struct Sprite {
     pub grid: Vec<Color>,
 
     pub origin: Vector2d,
-    pub target_pos: Vector2d,
+    // pub pixel_idxs: Vec<(usize, usize)>,
 }
 
 impl Sprite {
@@ -23,12 +23,12 @@ impl Sprite {
             (size_x * size_y) as usize
         ];
         let origin: Vector2d = Vector2d { x: (0.0), y: (0.0) };
+        // let pixel_idxs = vec![0; (size_x * size_y) as usize];
         Sprite {
             size_x: (size_x),
             size_y: (size_y),
             grid: grid,
             origin: origin,
-            target_pos: origin,
         }
     }
 
@@ -67,22 +67,5 @@ impl Sprite {
                 }))
         .length();
         return distance;
-    }
-
-    pub fn set_target_pos(&mut self, target_pos: Vector2d) {
-        self.target_pos = target_pos;
-    }
-
-    pub fn move_towards_target(&mut self, factor: f64) {
-        if factor < 0.0 || factor > 1.0 {
-            println!(
-                "Factor for 'move_towards_target' should be in [0.0 ... 1.0], got {}",
-                factor
-            );
-            return;
-        }
-
-        let d_target: Vector2d = self.target_pos - self.origin;
-        self.translate(d_target);
     }
 }

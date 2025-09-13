@@ -7,8 +7,10 @@ use std::{thread, time};
 
 use crate::canvas::Canvas;
 use crate::colors::{BLACK, CYAN, Color, MAGENTA, TRANSPARENT, WHITE, YELLOW};
+use crate::sprites::primitives::Frame;
 use crate::sprites::{Circle, Sprite};
 use crate::util::Vector2d;
+use crate::{SIZE_X, SIZE_Y};
 
 const RADIUS: f64 = 30.0;
 const Y_LEVEL: f64 = 300.0;
@@ -26,6 +28,7 @@ pub struct Game {
     fallings: Vec<Circle>,
     players: Vec<Circle>,
     stack_root: f64,
+    frames: Vec<Frame>,
     windows: Vec<Window>,
     rng: ThreadRng,
 }
@@ -40,6 +43,7 @@ impl Game {
             fallings: Vec::new(),
             players: Vec::new(),
             windows: Vec::new(),
+            frames: Vec::new(),
             rng: rand::rng(),
             gravity: Vector2d { x: 0.0, y: 3.0 },
             stack_root: Y_LEVEL,
@@ -59,6 +63,26 @@ impl Game {
             WindowOptions::default(),
         )?;
         self.windows.push(window);
+
+        let mut frame: Frame = Frame::new(SIZE_X, SIZE_Y, 10, CYAN);
+        self.frames.push(frame);
+
+        Ok(())
+    }
+
+    pub fn test(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        // initialize 32 bit buffer as canvas
+        let mut canvas: Canvas = Canvas::new(self.x_size, self.y_size);
+        while self.windows[0].is_open() && !self.windows[0].is_key_down(Key::Enter) {
+            // game loop
+
+            // update window with rendered framebuffer
+            self.windows[0].update_with_buffer(
+                &canvas.buffer,
+                self.x_size as usize,
+                self.y_size as usize,
+            )?;
+        }
         Ok(())
     }
 
@@ -82,7 +106,6 @@ impl Game {
 
                 // scroll stack down
                 if self.players[self.players.len() - 1].get_origin().y < Y_LEVEL {
-                    println!("Movin down");
                     self.stack_root += 1.0;
                 }
 
@@ -98,11 +121,13 @@ impl Game {
                     if Game::is_collision(&self.players[self.players.len() - 1], &falling) {
                         {
                             // collision detected, time to decide if good or bad
-                            if falling.color.as_u32() == MAGENTA.as_u32() {
+                            if falling.color.as_u32() == self.frames[0].color.as_u32() {
                                 // good collision
                                 falling_idxs_to_be_removed.push(i);
                                 let new_stacked: Circle = falling.clone();
                                 self.players.push(new_stacked);
+                                self.frames[0]
+                                    .set_color(&COLORS[self.rng.random_range(0..COLORS.len())]);
                             } else {
                                 // bad collision
                                 while self.players.len() > 2 {
@@ -153,27 +178,39 @@ impl Game {
                     //     player.get_origin().y
                     // );
                 }
-                println!("Stacksize: {}", self.players.len());
 
                 // spawn new falling
-                if self.rng.random_bool(0.01) {
+                if self.rng.random_bool(0.05) {
                     self.spawn_falling();
                 }
 
                 // apply gravity on falling
-                for falling in self.fallings.iter_mut() {
+                let mut falling_idxs_to_be_removed: Vec<usize> = Vec::new();
+                for (i, falling) in self.fallings.iter_mut().enumerate() {
                     falling.translate(self.gravity);
+                    if falling.get_origin().y > SIZE_Y as f64 {
+                        falling_idxs_to_be_removed.push(i);
+                    }
+                }
+                for i in falling_idxs_to_be_removed {
+                    if i < self.fallings.len() {
+                        self.fallings.remove(i);
+                    }
                 }
 
                 // render sprites
-                for falling in self.fallings.iter_mut() {
+                for falling in self.fallings.iter() {
                     // canvas.draw_crosshair(&falling.sprite.origin);
                     canvas.draw_sprite(&falling.sprite);
                 }
 
-                for player in self.players.iter_mut() {
+                for player in self.players.iter() {
                     // canvas.draw_crosshair(&player.sprite.origin);
                     canvas.draw_sprite(&player.sprite);
+                }
+
+                for frame in self.frames.iter() {
+                    canvas.draw_sprite(&frame.sprite);
                 }
 
                 // update window with rendered framebuffer
@@ -187,21 +224,24 @@ impl Game {
             };
 
             // sleep to stay within target fps
-            let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
-            let time_diff_ms = cur_time_ms - last_time_ms;
-            if self.target_interval_ms > time_diff_ms {
-                thread::sleep(time::Duration::from_millis(
-                    self.target_interval_ms as u64 - time_diff_ms as u64,
-                ));
-            }
-            // print!("{}[2J", 27 as char);
+            // let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
+            // let time_diff_ms = cur_time_ms - last_time_ms;
+            // if self.target_interval_ms > time_diff_ms {
+            //     thread::sleep(time::Duration::from_millis(
+            //         self.target_interval_ms as u64 - time_diff_ms as u64,
+            //     ));
+            // }
 
             // calc and display fps
             let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
             let fps = 1000.0 / (cur_time_ms - last_time_ms as u128) as f64;
+            print!("{}[2J", 27 as char);
             println!("FPS: {}", fps);
-
             println!("Frame: {}", frame);
+
+            println!("Stacksize: {}", self.players.len());
+            println!("Fallings count: {}", self.fallings.len());
+
             frame += 1;
             last_time_ms = cur_time_ms;
             // uncomment for single frame exec
