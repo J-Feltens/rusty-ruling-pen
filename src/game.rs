@@ -1,6 +1,7 @@
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 use rand::rngs::ThreadRng;
 use rand::{Rng, rng};
+use std::iter::Enumerate;
 use std::process::exit;
 use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
 use std::{thread, time};
@@ -52,11 +53,11 @@ impl Game {
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         for i in 0..2 {
-            let mut player = Circle::new(RADIUS, &CYAN);
+            let player = Circle::new(RADIUS, &CYAN);
             self.players.push(player);
         }
 
-        let mut window = Window::new(
+        let window = Window::new(
             "RRP (Rusty Ruling Pen)",
             self.x_size as usize,
             self.y_size as usize,
@@ -108,6 +109,8 @@ impl Game {
                 // scroll stack down
                 if self.players[self.players.len() - 1].get_origin().y < Y_LEVEL {
                     self.stack_root += 1.0;
+                } else if self.players[self.players.len() - 1].get_origin().y > Y_LEVEL as f64 {
+                    self.stack_root -= 1.0;
                 }
 
                 // manual stack increase for debug purposes
@@ -118,6 +121,7 @@ impl Game {
 
                 // collision
                 let mut falling_idxs_to_be_removed: Vec<usize> = Vec::new();
+                let mut stack_idxs_to_be_removed: Vec<usize> = Vec::new();
                 for (i, falling) in self.fallings.iter().enumerate() {
                     if Game::is_collision(&self.players[self.players.len() - 1], &falling) {
                         {
@@ -131,8 +135,10 @@ impl Game {
                                     .set_color(&COLORS[self.rng.random_range(0..COLORS.len())]);
                             } else {
                                 // bad collision
-                                while self.players.len() > 2 {
-                                    self.players.pop();
+                                if self.players.len() > 2 {
+                                    for i in self.players.len() / 2..self.players.len() {
+                                        stack_idxs_to_be_removed.push(i);
+                                    }
                                 }
                             }
                         }
@@ -143,20 +149,11 @@ impl Game {
                         self.fallings.remove(i);
                     }
                 }
-
-                // simple wasd movement for player
-                // if self.windows[0].is_key_down(Key::W) {
-                //     self.players[0].translate_xy(0.0, -10.0);
-                // }
-                // if self.windows[0].is_key_down(Key::A) {
-                //     self.players[0].translate_xy(-10.0, 0.0);
-                // }
-                // if self.windows[0].is_key_down(Key::S) {
-                //     self.players[0].translate_xy(0.0, 10.0);
-                // }
-                // if self.windows[0].is_key_down(Key::D) {
-                //     self.players[0].translate_xy(10.0, 0.0);
-                // }
+                for i in stack_idxs_to_be_removed {
+                    if i < self.players.len() {
+                        self.players.remove(i);
+                    }
+                }
 
                 // simple cursor for player
                 for (i, player) in self.players.iter_mut().enumerate() {
@@ -172,12 +169,6 @@ impl Game {
 
                     player.sprite.translate(delta_object_mouse);
                     canvas.draw_sprite(&player.sprite);
-                    // println!(
-                    //     "Player {} pos: {}, {}",
-                    //     i,
-                    //     player.get_origin().x,
-                    //     player.get_origin().y
-                    // );
                 }
 
                 // spawn new falling
@@ -225,13 +216,13 @@ impl Game {
             };
 
             // sleep to stay within target fps
-            // let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
-            // let time_diff_ms = cur_time_ms - last_time_ms;
-            // if self.target_interval_ms > time_diff_ms {
-            //     thread::sleep(time::Duration::from_millis(
-            //         self.target_interval_ms as u64 - time_diff_ms as u64,
-            //     ));
-            // }
+            let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
+            let time_diff_ms = cur_time_ms - last_time_ms;
+            if self.target_interval_ms > time_diff_ms {
+                thread::sleep(time::Duration::from_millis(
+                    self.target_interval_ms as u64 - time_diff_ms as u64,
+                ));
+            }
 
             // calc and display fps
             let cur_time_ms = Game::cur_time_in_milliseconds().unwrap() as u128;
@@ -240,6 +231,11 @@ impl Game {
             println!("FPS: {}", fps);
             println!("Frame: {}", frame);
 
+            println!("Stack root: {}", self.stack_root);
+            println!(
+                "Stack top: {}",
+                self.players[self.players.len() - 1].get_origin().y
+            );
             println!("Stacksize: {}", self.players.len());
             println!("Fallings count: {}", self.fallings.len());
 

@@ -16,7 +16,7 @@ pub mod game;
 pub mod sprites;
 pub mod util;
 
-const TARGET_FPS: u32 = 100;
+const TARGET_FPS: u32 = 1000;
 
 const SIZE_X: u32 = 1000;
 const SIZE_Y: u32 = 600;
