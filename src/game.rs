@@ -16,6 +16,7 @@ use crate::{SIZE_X, SIZE_Y};
 const RADIUS: f64 = 30.0;
 const Y_LEVEL: f64 = 300.0;
 const COLORS: [Color; 3] = [CYAN, YELLOW, MAGENTA];
+const SPAWN_RATE: f64 = 0.01;
 
 #[derive(Debug)]
 pub struct Game {
@@ -46,7 +47,7 @@ impl Game {
             windows: Vec::new(),
             frames: Vec::new(),
             rng: rand::rng(),
-            gravity: Vector2d { x: 0.0, y: 3.0 },
+            gravity: Vector2d { x: 0.0, y: 1.2 },
             stack_root: Y_LEVEL,
         }
     }
@@ -172,7 +173,7 @@ impl Game {
                 }
 
                 // spawn new falling
-                if self.rng.random_bool(0.05) {
+                if self.rng.random_bool(SPAWN_RATE) {
                     self.spawn_falling();
                 }
 
