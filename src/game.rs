@@ -270,7 +270,7 @@ impl Game {
         self.fallings.push(circle);
     }
 
-    fn cur_time_in_milliseconds() -> Result<u128, SystemTimeError> {
+    pub fn cur_time_in_milliseconds() -> Result<u128, SystemTimeError> {
         let current_system_time = SystemTime::now();
         let duration_since_epoch = current_system_time.duration_since(UNIX_EPOCH)?;
         let milliseconds_timestamp = duration_since_epoch.as_millis();
