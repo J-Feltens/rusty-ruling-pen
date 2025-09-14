@@ -13,7 +13,7 @@ use crate::sprites::{Circle, Sprite};
 use crate::util::Vector2d;
 use crate::{SIZE_X, SIZE_Y};
 
-const RADIUS: f64 = 30.0;
+const RADIUS: f64 = 50.0;
 const Y_LEVEL: f64 = 300.0;
 const COLORS: [Color; 3] = [CYAN, YELLOW, MAGENTA];
 const SPAWN_RATE: f64 = 0.01;
@@ -239,6 +239,11 @@ impl Game {
             );
             println!("Stacksize: {}", self.players.len());
             println!("Fallings count: {}", self.fallings.len());
+
+            println!(
+                "Sprite size: {}",
+                (self.players[0].sprite.grid.len() as f64).sqrt()
+            );
 
             frame += 1;
             last_time_ms = cur_time_ms;

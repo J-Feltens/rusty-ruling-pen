@@ -87,33 +87,80 @@ impl Letter {
         }
     }
 
-    pub fn print_dict(&self) {
+    pub fn print_dict(&self, mut string_up_to_now: String) {
+        string_up_to_now.push(self.letter);
+
+        // recusive depth-first-search
         if self.is_word {
-            print!("{}\n", self.letter);
+            print!("{}\n", string_up_to_now);
         }
+
         for i in 0..self.next.len() {
-            print!("{}", self.letter);
-            self.next[i].print_dict();
+            // cascading recursive call
+            self.next[i].print_dict(string_up_to_now.clone());
         }
+    }
+
+    pub fn is_word(&self, mut string: String) -> bool {
+        // base case
+        if string.len() <= 0 {
+            if self.is_word == true {
+                return true;
+            }
+            return false;
+        }
+
+        let cur_char: char = string.remove(0).to_ascii_uppercase();
+        if self.has_next(cur_char) {
+            println!("'{}' has '{}' as next", self.letter, cur_char);
+            // recursive call
+            for letter in self.next.iter() {
+                if letter.letter == cur_char {
+                    // recursive call
+                    return letter.is_word(string);
+                }
+            }
+        } else {
+            println!("'{}' doesnt have '{}' as next", self.letter, cur_char);
+        }
+
+        return false;
+    }
+
+    pub fn is_partial_word(&self, mut string: String) -> bool {
+        // base case
+        if string.len() <= 0 {
+            return true;
+        }
+
+        let cur_char: char = string.remove(0).to_ascii_uppercase();
+        if self.has_next(cur_char) {
+            println!("'{}' has '{}' as next", self.letter, cur_char);
+            // recursive call
+            for letter in self.next.iter() {
+                if letter.letter == cur_char {
+                    // recursive call
+                    return letter.is_partial_word(string);
+                }
+            }
+        } else {
+            println!("'{}' doesnt have '{}' as next", self.letter, cur_char);
+        }
+
+        return false;
     }
 }
 
-// fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
-fn main() {
-    // let mut game = Game::new(SIZE_X, SIZE_Y, TARGET_FPS);
-    // game.init();
-    // return game.run_game();
-
-    let start = Game::cur_time_in_milliseconds().unwrap();
+fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    // fn main() {
+    let mut game = Game::new(SIZE_X, SIZE_Y, TARGET_FPS);
+    game.init();
+    return game.run_game();
 
     let mut root: Letter = Letter::new(' ');
     let dictionary: Dictionary = Dictionary::new();
     for word in dictionary.dictionary.iter() {
         root.insert(word.to_string());
     }
-
-    let end = Game::cur_time_in_milliseconds().unwrap();
-
-    println!("Took {} ms", end - start);
-    // root.print_dict();
+    println!("{}", root.is_partial_word("aced".to_string()));
 }
