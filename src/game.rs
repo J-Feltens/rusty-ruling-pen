@@ -9,11 +9,11 @@ use std::{thread, time};
 use crate::canvas::Canvas;
 use crate::colors::{BLACK, CYAN, Color, MAGENTA, TRANSPARENT, WHITE, YELLOW};
 use crate::sprites::primitives::Frame;
-use crate::sprites::{Circle, Sprite};
+use crate::sprites::{Circle, LetterCircle, Sprite};
 use crate::util::Vector2d;
 use crate::{SIZE_X, SIZE_Y};
 
-const RADIUS: f64 = 50.0;
+const RADIUS: f64 = 30.0;
 const Y_LEVEL: f64 = 300.0;
 const COLORS: [Color; 3] = [CYAN, YELLOW, MAGENTA];
 const SPAWN_RATE: f64 = 0.01;
@@ -27,8 +27,8 @@ pub struct Game {
 
     gravity: Vector2d,
 
-    fallings: Vec<Circle>,
-    players: Vec<Circle>,
+    fallings: Vec<LetterCircle>,
+    players: Vec<LetterCircle>,
     stack_root: f64,
     frames: Vec<Frame>,
     windows: Vec<Window>,
@@ -54,7 +54,7 @@ impl Game {
 
     pub fn init(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         for i in 0..2 {
-            let player = Circle::new(RADIUS, &CYAN);
+            let player = LetterCircle::new('A', RADIUS, CYAN);
             self.players.push(player);
         }
 
@@ -116,7 +116,7 @@ impl Game {
 
                 // manual stack increase for debug purposes
                 if self.windows[0].is_key_pressed(Key::C, KeyRepeat::No) {
-                    let new_stacked: Circle = Circle::new(RADIUS, &MAGENTA);
+                    let new_stacked: LetterCircle = LetterCircle::new('X', RADIUS, MAGENTA);
                     self.players.push(new_stacked);
                 }
 
@@ -124,13 +124,16 @@ impl Game {
                 let mut falling_idxs_to_be_removed: Vec<usize> = Vec::new();
                 let mut stack_idxs_to_be_removed: Vec<usize> = Vec::new();
                 for (i, falling) in self.fallings.iter().enumerate() {
-                    if Game::is_collision(&self.players[self.players.len() - 1], &falling) {
+                    if Game::is_collision(
+                        &self.players[self.players.len() - 1].circle,
+                        &falling.circle,
+                    ) {
                         {
                             // collision detected, time to decide if good or bad
                             if falling.color.as_u32() == self.frames[0].color.as_u32() {
                                 // good collision
                                 falling_idxs_to_be_removed.push(i);
-                                let new_stacked: Circle = falling.clone();
+                                let new_stacked: LetterCircle = falling.clone();
                                 self.players.push(new_stacked);
                                 self.frames[0]
                                     .set_color(&COLORS[self.rng.random_range(0..COLORS.len())]);
@@ -159,17 +162,17 @@ impl Game {
                 // simple cursor for player
                 for (i, player) in self.players.iter_mut().enumerate() {
                     // stack offset
-                    player.sprite.origin.y = self.stack_root - RADIUS * 2.0 * i as f64;
+                    player.circle.sprite.origin.y = self.stack_root - RADIUS * 2.0 * i as f64;
 
                     let mut delta_object_mouse =
-                        (mouse_pos - player.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
+                        (mouse_pos - player.circle.sprite.origin) * Vector2d { x: (1.0), y: (0.0) };
 
                     // calc and apply inertia
                     let inertia: f64 = 1.0 / (i as f64 * 5.0);
                     delta_object_mouse.scale(inertia);
 
-                    player.sprite.translate(delta_object_mouse);
-                    canvas.draw_sprite(&player.sprite);
+                    player.circle.sprite.translate(delta_object_mouse);
+                    canvas.draw_sprite(&player.circle.sprite);
                 }
 
                 // spawn new falling
@@ -194,12 +197,12 @@ impl Game {
                 // render sprites
                 for falling in self.fallings.iter() {
                     // canvas.draw_crosshair(&falling.sprite.origin);
-                    canvas.draw_sprite(&falling.sprite);
+                    canvas.draw_sprite(&falling.circle.sprite);
                 }
 
                 for player in self.players.iter() {
                     // canvas.draw_crosshair(&player.sprite.origin);
-                    canvas.draw_sprite(&player.sprite);
+                    canvas.draw_sprite(&player.circle.sprite);
                 }
 
                 for frame in self.frames.iter() {
@@ -242,7 +245,7 @@ impl Game {
 
             println!(
                 "Sprite size: {}",
-                (self.players[0].sprite.grid.len() as f64).sqrt()
+                (self.players[0].circle.sprite.grid.len() as f64).sqrt()
             );
 
             frame += 1;
@@ -256,11 +259,12 @@ impl Game {
 
     pub fn spawn_falling(&mut self) {
         let color = &COLORS[self.rng.random_range(0..COLORS.len())];
+        let ch: char = char::from_u32(self.rng.random_range(65..65 + 26)).unwrap_or('X');
         let mut new_origin = Vector2d::new(self.rng.random_range(0.0..self.y_size as f64), -100.0);
         for i in 0..100 {
             let mut shortest_dist: f64 = 99999.9;
             for falling in self.fallings.iter() {
-                let dist = (falling.sprite.origin - new_origin).length();
+                let dist = (falling.circle.sprite.origin - new_origin).length();
                 if dist < shortest_dist {
                     shortest_dist = dist;
                 }
@@ -270,7 +274,7 @@ impl Game {
             }
         }
 
-        let mut circle = Circle::new(RADIUS, color);
+        let mut circle = LetterCircle::new(ch, RADIUS, color.clone());
         circle.set_origin(new_origin);
         self.fallings.push(circle);
     }

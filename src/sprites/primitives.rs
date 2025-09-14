@@ -109,6 +109,7 @@ impl Frame {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct LetterCircle {
     pub ch: char,
     pub circle: Circle,
@@ -119,7 +120,10 @@ impl LetterCircle {
     pub fn new(ch: char, r: f64, color: Color) -> LetterCircle {
         let mut circle: Circle = Circle::new(r, &color);
         if circle.sprite.size_x != 60 || circle.sprite.size_y != 60 {
-            panic!("Only spritesize 60x60 is currently supported :(");
+            panic!(
+                "Only spritesize 60x60 is currently supported, got {}x{} :(",
+                circle.sprite.size_x, circle.sprite.size_y
+            );
         }
 
         let ch = ch.to_ascii_uppercase();
@@ -149,5 +153,29 @@ impl LetterCircle {
             circle: (circle),
             color: (color),
         }
+    }
+
+    pub fn set_origin(&mut self, origin: Vector2d) {
+        self.circle.set_origin(origin);
+    }
+
+    pub fn set_origin_xy(&mut self, x: f64, y: f64) {
+        self.circle.set_origin_xy(x, y);
+    }
+
+    pub fn translate(&mut self, vec: Vector2d) {
+        self.circle.translate(vec);
+    }
+
+    pub fn translate_xy(&mut self, x: f64, y: f64) {
+        self.circle.translate_xy(x, y);
+    }
+
+    pub fn get_origin(&self) -> Vector2d {
+        return self.circle.get_origin();
+    }
+
+    pub fn get_center(&self) -> Vector2d {
+        return self.circle.get_center();
     }
 }
