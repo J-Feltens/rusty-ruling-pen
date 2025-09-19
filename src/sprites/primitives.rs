@@ -1,10 +1,9 @@
-use std::thread::spawn;
-
 use crate::{
     colors::{BLACK, Color},
     sprites::Sprite,
     util::Vector2d,
 };
+use image::{DynamicImage, GenericImageView, ImageReader, Pixel, Rgba};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Circle {
@@ -107,5 +106,76 @@ impl Frame {
                 }
             }
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct LetterCircle {
+    pub ch: char,
+    pub circle: Circle,
+    pub color: Color,
+}
+
+impl LetterCircle {
+    pub fn new(ch: char, r: f64, color: Color) -> LetterCircle {
+        let mut circle: Circle = Circle::new(r, &color);
+        if circle.sprite.size_x != 60 || circle.sprite.size_y != 60 {
+            panic!(
+                "Only spritesize 60x60 is currently supported, got {}x{} :(",
+                circle.sprite.size_x, circle.sprite.size_y
+            );
+        }
+
+        let ch = ch.to_ascii_uppercase();
+        if ch as u32 > (65 + 26) {
+            panic!("Illegal character '{}'", ch);
+        }
+
+        let img = image::open(format!("letters/{}.png", ch)).unwrap();
+        let x_size: u32 = img.dimensions().0;
+        let y_size: u32 = img.dimensions().1;
+
+        for x in 0..x_size {
+            for y in 0..y_size {
+                let pixel: Rgba<u8> = img.get_pixel(x, y);
+                let alpha: f64 = pixel[3] as f64;
+                if alpha > 0.0 {
+                    circle.sprite.grid[(y * x_size + x) as usize].r = pixel[0];
+                    circle.sprite.grid[(y * x_size + x) as usize].g = pixel[1];
+                    circle.sprite.grid[(y * x_size + x) as usize].b = pixel[2];
+                    circle.sprite.grid[(y * x_size + x) as usize].a = 1.0;
+                }
+            }
+        }
+
+        LetterCircle {
+            ch: (ch),
+            circle: (circle),
+            color: (color),
+        }
+    }
+
+    pub fn set_origin(&mut self, origin: Vector2d) {
+        self.circle.set_origin(origin);
+    }
+
+    pub fn set_origin_xy(&mut self, x: f64, y: f64) {
+        self.circle.set_origin_xy(x, y);
+    }
+
+    pub fn translate(&mut self, vec: Vector2d) {
+        self.circle.translate(vec);
+    }
+
+    pub fn translate_xy(&mut self, x: f64, y: f64) {
+        self.circle.translate_xy(x, y);
+    }
+
+    pub fn get_origin(&self) -> Vector2d {
+        return self.circle.get_origin();
+    }
+
+    pub fn get_center(&self) -> Vector2d {
+        return self.circle.get_center();
     }
 }
