@@ -30,7 +30,6 @@ pub struct Game {
     fallings: Vec<LetterCircle>,
     players: Vec<LetterCircle>,
     stack_root: f64,
-    frames: Vec<Frame>,
     windows: Vec<Window>,
     rng: ThreadRng,
 }
@@ -45,7 +44,6 @@ impl Game {
             fallings: Vec::new(),
             players: Vec::new(),
             windows: Vec::new(),
-            frames: Vec::new(),
             rng: rand::rng(),
             gravity: Vector2d { x: 0.0, y: 1.2 },
             stack_root: Y_LEVEL,
@@ -65,10 +63,6 @@ impl Game {
             WindowOptions::default(),
         )?;
         self.windows.push(window);
-
-        let mut frame: Frame = Frame::new(SIZE_X, SIZE_Y, 10, CYAN);
-        frame.sprite.recalc_pixel_idxs();
-        self.frames.push(frame);
 
         Ok(())
     }
@@ -130,21 +124,19 @@ impl Game {
                     ) {
                         {
                             // collision detected, time to decide if good or bad
-                            if falling.color.as_u32() == self.frames[0].color.as_u32() {
-                                // good collision
-                                falling_idxs_to_be_removed.push(i);
-                                let new_stacked: LetterCircle = falling.clone();
-                                self.players.push(new_stacked);
-                                self.frames[0]
-                                    .set_color(&COLORS[self.rng.random_range(0..COLORS.len())]);
-                            } else {
-                                // bad collision
-                                if self.players.len() > 2 {
-                                    for i in self.players.len() / 2..self.players.len() {
-                                        stack_idxs_to_be_removed.push(i);
-                                    }
-                                }
-                            }
+                            // if falling.color.as_u32() == self.frames[0].color.as_u32() {
+                            // good collision
+                            falling_idxs_to_be_removed.push(i);
+                            let new_stacked: LetterCircle = falling.clone();
+                            self.players.push(new_stacked);
+                            // } else {
+                            //     // bad collision
+                            //     if self.players.len() > 2 {
+                            //         for i in self.players.len() / 2..self.players.len() {
+                            //             stack_idxs_to_be_removed.push(i);
+                            //         }
+                            //     }
+                            // }
                         }
                     }
                 }
@@ -205,10 +197,6 @@ impl Game {
                     canvas.draw_sprite(&player.circle.sprite);
                 }
 
-                for frame in self.frames.iter() {
-                    canvas.draw_sprite(&frame.sprite);
-                }
-
                 // update window with rendered framebuffer
                 self.windows[0].update_with_buffer(
                     &canvas.buffer,
@@ -258,7 +246,8 @@ impl Game {
     }
 
     pub fn spawn_falling(&mut self) {
-        let color = &COLORS[self.rng.random_range(0..COLORS.len())];
+        // let color = &COLORS[self.rng.random_range(0..COLORS.len())];
+        let color = BLACK;
         let ch: char = char::from_u32(self.rng.random_range(65..65 + 26)).unwrap_or('X');
         let mut new_origin = Vector2d::new(self.rng.random_range(0.0..self.y_size as f64), -100.0);
         for i in 0..100 {
