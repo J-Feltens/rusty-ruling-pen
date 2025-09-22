@@ -1,7 +1,5 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::canvas::Canvas;
-
 /*
     Some simple vector utilites to kick it off
 */
