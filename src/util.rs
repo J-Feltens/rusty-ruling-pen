@@ -39,6 +39,11 @@ impl Vector2d {
     pub fn length(&self) -> f64 {
         return ((self.x * self.x) + (self.y * self.y)).sqrt();
     }
+
+    pub fn set_v(&mut self, x: f64, y: f64) {
+        self.x = x;
+        self.y = y;
+    }
 }
 
 // v1 + v2
