@@ -1,6 +1,6 @@
 use std::ptr::null;
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -61,5 +61,26 @@ pub const YELLOW: Color = Color {
     r: 255,
     g: 255,
     b: 0,
+    a: 1.0,
+};
+
+pub const RED: Color = Color {
+    r: 255,
+    g: 0,
+    b: 0,
+    a: 1.0,
+};
+
+pub const GREEN: Color = Color {
+    r: 0,
+    g: 255,
+    b: 0,
+    a: 1.0,
+};
+
+pub const BLUE: Color = Color {
+    r: 0,
+    g: 0,
+    b: 255,
     a: 1.0,
 };

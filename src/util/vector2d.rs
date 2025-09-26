@@ -1,4 +1,6 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+
+use rand::rand_core::le;
 
 /*
     Some simple vector utilites to kick it off
@@ -28,12 +30,14 @@ impl Vector2d {
         self.y *= s;
     }
 
-    pub fn rotate(&mut self, phi: f64) {
+    pub fn rotate(&mut self, phi: f64) -> Vector2d {
         let x: f64 = self.x * f64::cos(phi) - self.y * f64::sin(phi);
         let y: f64 = self.x * f64::sin(phi) + self.y * f64::cos(phi);
 
         self.x = x;
         self.y = y;
+
+        return *self;
     }
 
     pub fn length(&self) -> f64 {
@@ -43,6 +47,15 @@ impl Vector2d {
     pub fn set_v(&mut self, x: f64, y: f64) {
         self.x = x;
         self.y = y;
+    }
+
+    pub fn normalize(&mut self) -> Vector2d {
+        let length = self.length();
+        assert!(length > 0.0);
+        self.x /= length;
+        self.y /= length;
+
+        return *self;
     }
 }
 
