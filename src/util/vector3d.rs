@@ -1,6 +1,6 @@
 use rand::rand_core::le;
 
-use crate::util::{CoordSystem, Vector2d, coordinate_system};
+use crate::util::Vector2d;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /*
