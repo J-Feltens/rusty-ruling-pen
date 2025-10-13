@@ -12,15 +12,7 @@ pub struct Canvas {
     pub size_x: usize,
     pub size_y: usize,
 
-    pub range_x: (f64, f64),
-    pub range_y: (f64, f64),
-
     pub buffer: Vec<u32>,
-
-    up: Vector2d,
-    down: Vector2d,
-    left: Vector2d,
-    right: Vector2d,
 }
 
 impl Canvas {
@@ -29,14 +21,7 @@ impl Canvas {
             size_x: size_x,
             size_y: size_y,
 
-            range_x: (-3.0, 3.0),
-            range_y: (-3.0, 3.0),
             buffer: vec![bg_color.as_u32(); size_x * size_y],
-
-            up: Vector2d::new(0.0, 1.0),
-            down: Vector2d::new(0.0, -1.0),
-            left: Vector2d::new(-1.0, 0.0),
-            right: Vector2d::new(1.0, 0.0),
         }
     }
 
@@ -48,98 +33,24 @@ impl Canvas {
         return &self.buffer;
     }
 
-    pub fn set_range(&mut self, x_min: f64, x_max: f64, y_min: f64, y_max: f64) {
-        assert!(x_min <= x_max);
-        assert!(y_min <= y_max);
-        self.range_x = (x_min, x_max);
-        self.range_y = (y_min, y_max);
-    }
-
-    pub fn pan(&mut self, direction: Vector2d) {
-        self.range_x.0 += direction.x;
-        self.range_x.1 += direction.x;
-        self.range_y.0 += direction.y;
-        self.range_y.1 += direction.y;
-
-        println!(
-            "Current range: {} <= x <= {}, {} <= y <= {}",
-            self.range_x.0, self.range_x.1, self.range_y.0, self.range_y.1
-        );
-    }
-
-    pub fn zoom(&mut self, factor: f64) {
-        self.range_x.0 *= factor;
-        self.range_x.1 *= factor;
-        self.range_y.0 *= factor;
-        self.range_y.1 *= factor;
-    }
-
-    pub fn project_vec_to_canvas(&self, v: Vector2d) -> (i32, i32, bool) {
-        /*
-           projects a vector with f64 coords onto the discrete canvas using the range associated with the canvas
-
-           returns:
-                i32, i32        tupel of usize describing x- and y-coords and a boolean that is false if
-                                target coordiantes are out of bounds
-        */
-        let out_of_bounds;
-        if v.x >= self.range_x.0
-            && v.x <= self.range_x.1
-            && v.y >= self.range_y.0
-            && v.y <= self.range_y.1
-        {
-            // println!(
-            //     "Deemed {}, {} within of bounds for bounds x in ({}, {}) and y in ({}, {})",
-            //     v.x, v.y, self.range_x.0, self.range_x.1, self.range_y.0, self.range_y.1
-            // );
-            out_of_bounds = false;
-        } else {
-            // println!(
-            //     "Deemed {}, {} out of bounds for bounds x in ({}, {}) and y in ({}, {})",
-            //     v.x, v.y, self.range_x.0, self.range_x.1, self.range_y.0, self.range_y.1
-            // );
-            out_of_bounds = true;
-        }
-        // map vector coordinates to canvas.range
-        let x: i32 = map_range(
-            v.x,
-            self.range_x.0,
-            self.range_x.1,
-            0.0,
-            self.size_x as f64 - 1.0,
-        ) as i32;
-        let y: i32 = map_range(
-            v.y,
-            self.range_y.0,
-            self.range_y.1,
-            0.0,
-            self.size_y as f64 - 1.0,
-        ) as i32;
-
-        return (x, y, out_of_bounds || !self.integer_coords_in_canvas(x, y));
-    }
-
     pub fn integer_coords_in_canvas(&self, x: i32, y: i32) -> bool {
         return x >= 0 && (x as usize) < self.size_x && y >= 0 && (y as usize) < self.size_y;
     }
 
-    pub fn draw_line_1px(&mut self, v1: Vector2d, v2: Vector2d, color: &Color) {
+    pub fn draw_line_1px(&mut self, v1_integer: (i32, i32), v2_integer: (i32, i32), color: &Color) {
         /*
            As of now, this function contains the only direct write-on-bytebuffer operation
            Update: next to canvas.draw_dot()
         */
 
-        let v1_integer = self.project_vec_to_canvas(v1);
-        let v2_integer = self.project_vec_to_canvas(v2);
-
-        if v1_integer.2 {
+        if !self.integer_coords_in_canvas(v1_integer.0, v1_integer.1) {
             println!(
                 "Line endpoint is out of bounds ({}, {})",
                 v1_integer.0, v1_integer.1
             );
             return;
         }
-        if v2_integer.2 {
+        if !self.integer_coords_in_canvas(v2_integer.0, v2_integer.1) {
             println!(
                 "Line endpoint is out of bounds ({}, {})",
                 v2_integer.0, v2_integer.1
@@ -188,38 +99,30 @@ impl Canvas {
         }
     }
 
-    pub fn draw_line(&mut self, v1: Vector2d, v2: Vector2d, width: u32, color: &Color) {
-        assert!(width >= 1);
-
-        for i in 0..width {
-            self.draw_line_1px(v1 + self.up * i as f64, v2 + self.up * i as f64, color);
-            self.draw_line_1px(v1 + self.down * i as f64, v2 + self.down * i as f64, color);
-            self.draw_line_1px(v1 + self.left * i as f64, v2 + self.left * i as f64, color);
-            self.draw_line_1px(
-                v1 + self.right * i as f64,
-                v2 + self.right * i as f64,
-                color,
-            );
+    pub fn draw_dot(&mut self, center: (i32, i32), color: &Color) {
+        if self.integer_coords_in_canvas(center.0, center.1) {
+            self.buffer
+                [((self.size_y as i32 - 1 - center.1) * self.size_x as i32 + center.0) as usize] =
+                color.as_u32();
         }
     }
 
-    pub fn draw_dot(&mut self, vector: Vector2d, color: &Color) {
-        let center_in_canvas = self.project_vec_to_canvas(vector);
-        if !center_in_canvas.2 {
+    pub fn draw_circle(&mut self, center: (i32, i32), radius: i32, color: &Color) {
+        if self.integer_coords_in_canvas(center.0, center.1) {
             // center is within canvas bounds
 
-            self.buffer[((self.size_y as i32 - 1 - center_in_canvas.1) * self.size_x as i32
-                + center_in_canvas.0) as usize] = color.as_u32();
-        }
-    }
+            let r_squared = radius * radius;
+            for y in -radius..radius + 1 {
+                for x in -radius..radius + 1 {
+                    if y * y + x * x <= r_squared {
+                        self.draw_dot((center.0 + x, center.1 + y), color);
+                    }
+                }
+            }
 
-    pub fn draw_circle(&mut self, center: Vector2d, radius: f64, color: &Color) {
-        let center_in_canvas = self.project_vec_to_canvas(center);
-        if !center_in_canvas.2 {
-            // center is within canvas bounds
-
-            self.buffer[((self.size_y as i32 - 1 - center_in_canvas.1) * self.size_x as i32
-                + center_in_canvas.0) as usize] = color.as_u32();
+            self.buffer
+                [((self.size_y as i32 - 1 - center.1) * self.size_x as i32 + center.0) as usize] =
+                color.as_u32();
         }
     }
 

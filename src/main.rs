@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         if let Some((mouse_x, mouse_y)) = window.get_mouse_pos(MouseMode::Clamp) {
             master_canvas.reset(&BLACK);
 
-            master_canvas.draw_dot(vector, color);
+            master_canvas.draw_circle((400, 400), 100, &CYAN);
 
             window.update_with_buffer(&master_canvas.get_buffer(), SIZE_X, SIZE_Y)?;
         } else {
