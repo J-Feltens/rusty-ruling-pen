@@ -213,43 +213,14 @@ impl Canvas {
         }
     }
 
-    pub fn calc_grid_spacing(&mut self) -> (f64, f64) {
-        let dx = self.range_x.1 - self.range_x.0;
-        let dy = self.range_y.1 - self.range_y.0;
+    pub fn draw_circle(&mut self, center: Vector2d, radius: f64, color: &Color) {
+        let center_in_canvas = self.project_vec_to_canvas(center);
+        if !center_in_canvas.2 {
+            // center is within canvas bounds
 
-        // figure out optimal spacing of grid ticks, straight up brute force approach
-        let mut major_tick_spacing_x = 1.0 as f64;
-        let mut major_tick_spacing_y = 1.0 as f64;
-        loop {
-            let tick_count_x = dx / major_tick_spacing_x;
-            if tick_count_x < 2.0 {
-                // less than two ticks for x axis, gotta decrease tick spacing
-                major_tick_spacing_x *= 0.1;
-            } else if tick_count_x > 20.0 {
-                // too many damn ticks! gotta increase spacing
-                major_tick_spacing_x *= 10.0;
-            } else {
-                break;
-            }
+            self.buffer[((self.size_y as i32 - 1 - center_in_canvas.1) * self.size_x as i32
+                + center_in_canvas.0) as usize] = color.as_u32();
         }
-        loop {
-            let tick_count_y = dy / major_tick_spacing_y;
-            if tick_count_y < 2.0 {
-                // less than two ticks for y ayis, gotta decrease tick spacing
-                major_tick_spacing_y *= 0.1;
-            } else if tick_count_y > 20.0 {
-                // too many damn ticks! gotta increase spacing
-                major_tick_spacing_y *= 10.0;
-            } else {
-                break;
-            }
-        }
-        // println!(
-        //     "Optimal major tick spacing: {}, {}",
-        //     major_tick_spacing_x, major_tick_spacing_y
-        // );
-
-        return (major_tick_spacing_x, major_tick_spacing_y);
     }
 
     pub fn add_layer(&mut self, layer: Canvas, pos_x: u32, pos_y: u32) {

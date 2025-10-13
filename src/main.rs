@@ -38,89 +38,15 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut master_canvas: Canvas = Canvas::new(SIZE_X, SIZE_Y, &CYAN);
 
-    let mut mini_canvas = Canvas::new(700, 700, &WHITE);
-    mini_canvas.set_range(-1.0, 1.0, -1.0, 1.0);
-
     // master_canvas.set_viewport_offset(Vector2d::new(100.0, -100.0));
 
     let word_origin: Vector3d = Vector3d::new(0.0, 0.0, 0.0);
 
     while !window.is_key_down(Key::Enter) {
         if let Some((mouse_x, mouse_y)) = window.get_mouse_pos(MouseMode::Clamp) {
-            mini_canvas.reset(&WHITE);
+            master_canvas.reset(&BLACK);
 
-            let keys_down: Vec<Key> = window.get_keys();
-
-            for key in keys_down.iter() {
-                if window.is_key_pressed(Key::W, minifb::KeyRepeat::Yes) {
-                    mini_canvas.pan(Vector2d::down(0.01));
-                }
-                if window.is_key_pressed(Key::S, minifb::KeyRepeat::Yes) {
-                    mini_canvas.pan(Vector2d::up(0.01));
-                }
-                if window.is_key_pressed(Key::A, minifb::KeyRepeat::Yes) {
-                    mini_canvas.pan(Vector2d::right(0.01));
-                }
-                if window.is_key_pressed(Key::D, minifb::KeyRepeat::Yes) {
-                    mini_canvas.pan(Vector2d::left(0.01));
-                }
-                if window.is_key_pressed(Key::E, minifb::KeyRepeat::Yes) {
-                    mini_canvas.zoom(1.05);
-                }
-                if window.is_key_pressed(Key::Q, minifb::KeyRepeat::Yes) {
-                    mini_canvas.zoom(0.95);
-                }
-            }
-
-            // calc dotted grid
-            let (major_tick_spacing_x, major_tick_spacing_y) = mini_canvas.calc_grid_spacing();
-            let (minor_tick_spacing_x, minor_tick_spacing_y) =
-                (major_tick_spacing_x / 10.0, major_tick_spacing_y / 10.0);
-
-            let mut cur_x = mini_canvas.range_x.0.floor();
-            let mut cur_y = mini_canvas.range_y.0.floor();
-
-            // draw minor ticks
-            while cur_x < mini_canvas.range_x.1 {
-                let mut cur_y = mini_canvas.range_y.0.floor();
-                while cur_y < mini_canvas.range_y.1 {
-                    mini_canvas.draw_dot(Vector2d::new(cur_x, cur_y), &BLACK);
-                    cur_y += minor_tick_spacing_y;
-                }
-                cur_x += minor_tick_spacing_x;
-            }
-
-            // draw major ticks
-            let mut cur_x = mini_canvas.range_x.0.floor();
-            let mut cur_y = mini_canvas.range_y.0.floor();
-            while cur_x < mini_canvas.range_x.0 {
-                cur_x += major_tick_spacing_x;
-            }
-            while cur_y < mini_canvas.range_y.0 {
-                cur_y += major_tick_spacing_y;
-            }
-
-            while cur_x < mini_canvas.range_x.1 {
-                mini_canvas.draw_line(
-                    Vector2d::new(cur_x as f64, mini_canvas.range_y.0),
-                    Vector2d::new(cur_x as f64, mini_canvas.range_y.1),
-                    1,
-                    &BLACK,
-                );
-                cur_x += major_tick_spacing_x;
-            }
-            while cur_y < mini_canvas.range_y.1 {
-                mini_canvas.draw_line(
-                    Vector2d::new(mini_canvas.range_x.0, cur_y),
-                    Vector2d::new(mini_canvas.range_x.1, cur_y),
-                    1,
-                    &BLACK,
-                );
-                cur_y += major_tick_spacing_y;
-            }
-
-            master_canvas.reset(&CYAN);
-            master_canvas.add_layer(mini_canvas.clone(), 50, 50);
+            master_canvas.draw_dot(vector, color);
 
             window.update_with_buffer(&master_canvas.get_buffer(), SIZE_X, SIZE_Y)?;
         } else {
