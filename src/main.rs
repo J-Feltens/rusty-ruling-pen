@@ -44,22 +44,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, &WHITE);
 
     // define polygon
-    let scale = 30.0;
+    let scale = 30;
 
-    let p1 = Vector2d::new(2.0 * scale, 5.0 * scale);
-    let p2 = Vector2d::new(14.0 * scale, 14.0 * scale);
-    let p3 = Vector2d::new(8.0 * scale, 2.0 * scale);
+    let p1 = IntegerVector2d::new(2 * scale, 5 * scale, 1.0);
+    let p2 = IntegerVector2d::new(14 * scale, 14 * scale, 1.0);
+    let p3 = IntegerVector2d::new(8 * scale, 2 * scale, 0.0);
 
     let mut points = vec![p1, p2, p3];
 
-    // cast polygon to integer coords
-    let integer_points = points
-        .clone()
-        .into_iter()
-        .map(|x| IntegerVector2d::from_floats(x.x, x.y))
-        .collect::<Vec<_>>();
-
-    // reset canvas to checkerboard
     canvas.checker(
         &WHITE,
         &Color {
@@ -71,7 +63,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
 
     // finally, draw polygon
-    draw_polygon_onto_buffer(&integer_points, &mut canvas, &BLACK, false);
+    draw_polygon_onto_buffer(&points, &mut canvas, &BLACK, false);
 
     while window.is_open() && !window.is_key_down(Key::Enter) {
         // render loop

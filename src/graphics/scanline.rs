@@ -1,5 +1,5 @@
 use crate::{
-    graphics::{Canvas, Color},
+    graphics::{Canvas, Color, rgb2u32},
     vectors::{IntegerVector2d, Vector2d},
 };
 
@@ -11,16 +11,32 @@ pub struct EdgeTableEntry {
 
     pub dx_dy: f64,
     pub id: i32,
+
+    pub attr_lower: f64,
+    pub attr_upper: f64,
+    pub dattr_dy: f64,
 }
 
 impl EdgeTableEntry {
-    pub fn new(y_lower: i32, x_lower: i32, y_upper: i32, dx_dy: f64, id: i32) -> EdgeTableEntry {
+    pub fn new(
+        y_lower: i32,
+        x_lower: i32,
+        y_upper: i32,
+        dx_dy: f64,
+        id: i32,
+        attr_lower: f64,
+        attr_upper: f64,
+        dattr_dy: f64,
+    ) -> EdgeTableEntry {
         EdgeTableEntry {
             y_lower,
             x_lower,
             y_upper,
             dx_dy,
             id,
+            attr_lower,
+            attr_upper,
+            dattr_dy,
         }
     }
 
@@ -31,12 +47,19 @@ impl EdgeTableEntry {
         let y_upper = if p1.y < p2.y { p2.y } else { p1.y };
         let dx_dy = (x_upper - x_lower) as f64 / (y_upper - y_lower) as f64;
 
+        let attr_lower = if p1.y < p2.y { p1.attr } else { p2.attr };
+        let attr_upper = if p1.y < p2.y { p2.attr } else { p1.attr };
+        let dattr_dy = (attr_upper - attr_lower) as f64 / (y_upper - y_lower) as f64;
+
         EdgeTableEntry {
             y_lower,
             x_lower,
             y_upper,
             dx_dy,
             id,
+            attr_lower,
+            attr_upper,
+            dattr_dy,
         }
     }
 
@@ -97,15 +120,27 @@ pub struct ActiveEdgeTableEntry {
 
     pub dx_dy: f64,
     pub id: i32,
+
+    pub attr_intersect: f64,
+    pub dattr_dy: f64,
 }
 
 impl ActiveEdgeTableEntry {
-    pub fn new(x_intersect: f64, y_upper: i32, dx_dy: f64, id: i32) -> ActiveEdgeTableEntry {
+    pub fn new(
+        x_intersect: f64,
+        y_upper: i32,
+        dx_dy: f64,
+        id: i32,
+        attr_intersect: f64,
+        dattr_dy: f64,
+    ) -> ActiveEdgeTableEntry {
         ActiveEdgeTableEntry {
             x_intersect,
             y_upper,
             dx_dy,
             id,
+            attr_intersect,
+            dattr_dy,
         }
     }
 }
@@ -204,12 +239,15 @@ pub fn draw_polygon_onto_buffer(
 
         // compute values for active edge entry
         let x_intersect = edge.x_lower as f64;
+        let attr_intersect = edge.attr_lower;
 
         active_edge_table.list.push(ActiveEdgeTableEntry::new(
             x_intersect,
             edge.y_upper,
             edge.dx_dy,
             edge.id,
+            attr_intersect,
+            edge.dattr_dy,
         ));
 
         active_edge_table.sort();
@@ -252,12 +290,15 @@ pub fn draw_polygon_onto_buffer(
 
             // compute values for active edge entry
             let x_intersect = edge.x_lower as f64;
+            let attr_intersect = edge.attr_lower;
 
             active_edge_table.list.push(ActiveEdgeTableEntry::new(
                 x_intersect,
                 edge.y_upper,
                 edge.dx_dy,
                 edge.id,
+                attr_intersect,
+                edge.dattr_dy,
             ));
 
             active_edge_table.sort();
@@ -273,16 +314,22 @@ pub fn draw_polygon_onto_buffer(
         // draw between x_1_intersect and x_2_intersect
         if active_edge_table.list.len() >= 2 {
             for i in 0..(active_edge_table.list.len() as f64 / 2.0) as usize {
-                let mut cur_x = active_edge_table.list[2 * i].x_intersect;
+                let edge1 = &active_edge_table.list[2 * i];
+                let edge2 = &active_edge_table.list[2 * i + 1];
+
+                let mut cur_x = edge1.x_intersect;
+                let mut cur_attr = edge1.attr_intersect;
+
                 if verbose {
-                    println!(
-                        "Drawing between edges e_{} and 3_{}",
-                        active_edge_table.list[2 * i].id,
-                        active_edge_table.list[2 * i + 1].id
-                    );
+                    println!("Drawing between edges e_{} and 3_{}", edge1.id, edge2.id);
                 }
-                while cur_x <= active_edge_table.list[2 * i + 1].x_intersect {
-                    canvas.set_pixel((cur_x.round() as i32, y_scan), color);
+
+                while cur_x <= edge2.x_intersect {
+                    let brightness_u8 = (cur_attr * 255.0) as u8;
+                    canvas.set_pixel(
+                        (cur_x.round() as i32, y_scan),
+                        &Color::new(brightness_u8, brightness_u8, brightness_u8, 1.0),
+                    );
                     cur_x += 1.0;
                 }
             }
@@ -291,6 +338,7 @@ pub fn draw_polygon_onto_buffer(
         // increment x_intersect in every edge in AET
         for edge in active_edge_table.list.iter_mut() {
             edge.x_intersect += edge.dx_dy;
+            edge.attr_intersect += edge.dattr_dy;
         }
 
         // increment y_scan
