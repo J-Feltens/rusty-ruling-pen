@@ -46,9 +46,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // define polygon
     let scale = 30;
 
-    let p1 = IntegerVector2d::new(2 * scale, 5 * scale, 1.0);
-    let p2 = IntegerVector2d::new(14 * scale, 14 * scale, 1.0);
-    let p3 = IntegerVector2d::new(8 * scale, 2 * scale, 0.0);
+    let p1 = IntegerVector2d::new(2 * scale, 5 * scale, vec![1.0, 0.0, 0.0]);
+    let p2 = IntegerVector2d::new(14 * scale, 14 * scale, vec![0.0, 1.0, 0.0]);
+    let p3 = IntegerVector2d::new(8 * scale, 2 * scale, vec![0.0, 0.0, 1.0]);
 
     let mut points = vec![p1, p2, p3];
 

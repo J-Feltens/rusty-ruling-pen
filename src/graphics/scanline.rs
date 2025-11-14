@@ -12,9 +12,9 @@ pub struct EdgeTableEntry {
     pub dx_dy: f64,
     pub id: i32,
 
-    pub attr_lower: f64,
-    pub attr_upper: f64,
-    pub dattr_dy: f64,
+    pub attrs_lower: Vec<f64>,
+    pub attrs_upper: Vec<f64>,
+    pub dattrs_dy: Vec<f64>,
 }
 
 impl EdgeTableEntry {
@@ -24,9 +24,9 @@ impl EdgeTableEntry {
         y_upper: i32,
         dx_dy: f64,
         id: i32,
-        attr_lower: f64,
-        attr_upper: f64,
-        dattr_dy: f64,
+        attrs_lower: Vec<f64>,
+        attrs_upper: Vec<f64>,
+        dattrs_dy: Vec<f64>,
     ) -> EdgeTableEntry {
         EdgeTableEntry {
             y_lower,
@@ -34,22 +34,36 @@ impl EdgeTableEntry {
             y_upper,
             dx_dy,
             id,
-            attr_lower,
-            attr_upper,
-            dattr_dy,
+            attrs_lower,
+            attrs_upper,
+            dattrs_dy,
         }
     }
 
     pub fn from_points(p1: IntegerVector2d, p2: IntegerVector2d, id: i32) -> EdgeTableEntry {
+        assert_eq!(p1.attrs.len(), p2.attrs.len());
+
         let x_lower = if p1.y < p2.y { p1.x } else { p2.x };
         let y_lower = if p1.y < p2.y { p1.y } else { p2.y };
         let x_upper = if p1.y < p2.y { p2.x } else { p1.x };
         let y_upper = if p1.y < p2.y { p2.y } else { p1.y };
         let dx_dy = (x_upper - x_lower) as f64 / (y_upper - y_lower) as f64;
 
-        let attr_lower = if p1.y < p2.y { p1.attr } else { p2.attr };
-        let attr_upper = if p1.y < p2.y { p2.attr } else { p1.attr };
-        let dattr_dy = (attr_upper - attr_lower) as f64 / (y_upper - y_lower) as f64;
+        let attrs_lower = if p1.y < p2.y {
+            p1.attrs.clone()
+        } else {
+            p2.attrs.clone()
+        };
+        let attrs_upper = if p1.y < p2.y {
+            p2.attrs.clone()
+        } else {
+            p1.attrs.clone()
+        };
+
+        let mut dattrs_dy = vec![0.0; attrs_lower.len()];
+        for i in 0..attrs_lower.len() {
+            dattrs_dy[i] = (attrs_upper[i] - attrs_lower[i]) as f64 / (y_upper - y_lower) as f64;
+        }
 
         EdgeTableEntry {
             y_lower,
@@ -57,9 +71,9 @@ impl EdgeTableEntry {
             y_upper,
             dx_dy,
             id,
-            attr_lower,
-            attr_upper,
-            dattr_dy,
+            attrs_lower,
+            attrs_upper,
+            dattrs_dy,
         }
     }
 
@@ -121,8 +135,8 @@ pub struct ActiveEdgeTableEntry {
     pub dx_dy: f64,
     pub id: i32,
 
-    pub attr_intersect: f64,
-    pub dattr_dy: f64,
+    pub attrs_intersect: Vec<f64>,
+    pub dattrs_dy: Vec<f64>,
 }
 
 impl ActiveEdgeTableEntry {
@@ -131,16 +145,16 @@ impl ActiveEdgeTableEntry {
         y_upper: i32,
         dx_dy: f64,
         id: i32,
-        attr_intersect: f64,
-        dattr_dy: f64,
+        attrs_intersect: Vec<f64>,
+        dattrs_dy: Vec<f64>,
     ) -> ActiveEdgeTableEntry {
         ActiveEdgeTableEntry {
             x_intersect,
             y_upper,
             dx_dy,
             id,
-            attr_intersect,
-            dattr_dy,
+            attrs_intersect,
+            dattrs_dy,
         }
     }
 }
@@ -193,10 +207,14 @@ pub fn draw_polygon_onto_buffer(
     // build edge table, ignore horizontal edges
     let mut edge_table = EdgeTable::new();
     for i in 0..points.len() {
-        let p1 = points[i % points.len()];
-        let p2 = points[(i + 1) % points.len()];
+        let p1 = &points[i % points.len()];
+        let p2 = &points[(i + 1) % points.len()];
         if p1.y != p2.y {
-            edge_table.add_edge(EdgeTableEntry::from_points(p1, p2, i as i32 + 1));
+            edge_table.add_edge(EdgeTableEntry::from_points(
+                p1.clone(),
+                p2.clone(),
+                i as i32 + 1,
+            ));
         }
     }
 
@@ -239,15 +257,15 @@ pub fn draw_polygon_onto_buffer(
 
         // compute values for active edge entry
         let x_intersect = edge.x_lower as f64;
-        let attr_intersect = edge.attr_lower;
+        let attrs_intersect = edge.attrs_lower;
 
         active_edge_table.list.push(ActiveEdgeTableEntry::new(
             x_intersect,
             edge.y_upper,
             edge.dx_dy,
             edge.id,
-            attr_intersect,
-            edge.dattr_dy,
+            attrs_intersect,
+            edge.dattrs_dy,
         ));
 
         active_edge_table.sort();
@@ -290,7 +308,7 @@ pub fn draw_polygon_onto_buffer(
 
             // compute values for active edge entry
             let x_intersect = edge.x_lower as f64;
-            let attr_intersect = edge.attr_lower;
+            let attr_intersect = edge.attrs_lower;
 
             active_edge_table.list.push(ActiveEdgeTableEntry::new(
                 x_intersect,
@@ -298,7 +316,7 @@ pub fn draw_polygon_onto_buffer(
                 edge.dx_dy,
                 edge.id,
                 attr_intersect,
-                edge.dattr_dy,
+                edge.dattrs_dy,
             ));
 
             active_edge_table.sort();
@@ -318,18 +336,20 @@ pub fn draw_polygon_onto_buffer(
                 let edge2 = &active_edge_table.list[2 * i + 1];
 
                 let mut cur_x = edge1.x_intersect;
-                let mut cur_attr = edge1.attr_intersect;
+                let mut cur_attrs = edge1.attrs_intersect.clone();
 
                 if verbose {
                     println!("Drawing between edges e_{} and 3_{}", edge1.id, edge2.id);
                 }
 
                 while cur_x <= edge2.x_intersect {
-                    let brightness_u8 = (cur_attr * 255.0) as u8;
-                    canvas.set_pixel(
-                        (cur_x.round() as i32, y_scan),
-                        &Color::new(brightness_u8, brightness_u8, brightness_u8, 1.0),
+                    let color = Color::new(
+                        (cur_attrs[0] * 255.0) as u8,
+                        (cur_attrs[1] * 255.0) as u8,
+                        (cur_attrs[2] * 255.0) as u8,
+                        1.0,
                     );
+                    canvas.set_pixel((cur_x.round() as i32, y_scan), &color);
                     cur_x += 1.0;
                 }
             }
@@ -338,7 +358,9 @@ pub fn draw_polygon_onto_buffer(
         // increment x_intersect in every edge in AET
         for edge in active_edge_table.list.iter_mut() {
             edge.x_intersect += edge.dx_dy;
-            edge.attr_intersect += edge.dattr_dy;
+            for i in 0..edge.attrs_intersect.len() {
+                edge.attrs_intersect[i] += edge.dattrs_dy[i];
+            }
         }
 
         // increment y_scan
