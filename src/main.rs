@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     )?;
 
     let mut buffer: Vec<u32> = vec![0; (SIZE_X * SIZE_Y) as usize];
+
     for i in 0..(SIZE_X * SIZE_Y) as usize {
         buffer[i] = Color::as_u32(&Color {
             r: (255),
