@@ -36,6 +36,16 @@ impl Vector2d {
         self.y = y;
     }
 
+    pub fn rotate_around_point(&mut self, phi: f64, center: Vector2d) {
+        self.x -= center.x;
+        self.y -= center.y;
+
+        self.rotate(phi);
+
+        self.x += center.x;
+        self.y += center.y;
+    }
+
     pub fn length(&self) -> f64 {
         return ((self.x * self.x) + (self.y * self.y)).sqrt();
     }
