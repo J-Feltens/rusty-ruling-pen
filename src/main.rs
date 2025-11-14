@@ -10,15 +10,25 @@ pub mod colors;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: u32 = 64;
-const SIZE_Y: u32 = 64;
+const SIZE_X: usize = 64;
+const SIZE_Y: usize = 64;
+const SCALE: minifb::Scale = minifb::Scale::X4;
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut window = Window::new(
         "RRP (Rusty Ruling Pen)",
-        SIZE_X as usize,
-        SIZE_Y as usize,
-        WindowOptions::default(),
+        SIZE_X,
+        SIZE_Y,
+        WindowOptions {
+            borderless: false,
+            title: true,
+            scale: SCALE,
+            resize: false,
+            scale_mode: minifb::ScaleMode::UpperLeft,
+            topmost: false,
+            transparency: false,
+            none: false,
+        },
     )?;
 
     let mut buffer: Vec<u32> = vec![0; (SIZE_X * SIZE_Y) as usize];
