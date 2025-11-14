@@ -4,21 +4,23 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use std::ascii::escape_default;
 use std::collections::LinkedList;
 use std::process::exit;
+use std::{thread, time};
 
 use crate::graphics::colors::rgb2u32;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTableEntry};
 use crate::graphics::{
     BLACK, BLUE, CYAN, Canvas, Color, EdgeTable, GREEN, MAGENTA, RED, WHITE, YELLOW,
 };
-use crate::vectors::Vector2d;
+use crate::vectors::{IntegerVector2d, Vector2d};
 
 pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 32;
-const SIZE_Y: usize = 32;
-const SCALE: minifb::Scale = minifb::Scale::X16;
+const SIZE_X: usize = 512;
+const SIZE_Y: usize = 512;
+const SCALE: minifb::Scale = minifb::Scale::X1;
+const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(100);
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut window = Window::new(
@@ -49,28 +51,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
 
     // define polygon
-    let p1 = Vector2d::new(1.0, 1.0);
-    let p2 = Vector2d::new(4.0, 7.0);
-    let p3 = Vector2d::new(4.0, 4.0);
-    let p4 = Vector2d::new(6.0, 5.0);
-    let p5 = Vector2d::new(7.0, 3.0);
+    let mut edge_table = EdgeTable::new();
+    let scale = 70;
+    let p1 = IntegerVector2d::new(7 * scale, 3 * scale);
+    let p2 = IntegerVector2d::new(1 * scale, 1 * scale);
+    let p3 = IntegerVector2d::new(4 * scale, 7 * scale);
+    let p4 = IntegerVector2d::new(4 * scale, 4 * scale);
+    let p5 = IntegerVector2d::new(6 * scale, 5 * scale);
 
-    // let p1 = Vector2d::new(1.0, 1.0);
-    // let p2 = Vector2d::new(12.0, 21.0);
-    // let p3 = Vector2d::new(12.0, 12.0);
-    // let p4 = Vector2d::new(18.0, 15.0);
-    // let p5 = Vector2d::new(21.0, 9.0);
-
-    let points = vec![p5, p1, p2, p3, p4];
+    let mut points = vec![p1, p2, p3, p4, p5];
 
     let mut edge_table = EdgeTable::new();
-    edge_table.list = vec![
-        EdgeTableEntry::new(1.0, 1.0, 3.0, 3.0, 1),
-        EdgeTableEntry::new(1.0, 1.0, 7.0, 1.5, 2),
-        EdgeTableEntry::new(3.0, 7.0, 5.0, -1.5, 4),
-        EdgeTableEntry::new(4.0, 4.0, 7.0, 0.0, 3),
-        EdgeTableEntry::new(4.0, 4.0, 5.0, 2.0, 5),
-    ];
+    edge_table.add_edge(EdgeTableEntry::from_points(p1, p2, 1));
+    edge_table.add_edge(EdgeTableEntry::from_points(p2, p3, 2));
+    edge_table.add_edge(EdgeTableEntry::from_points(p3, p4, 3));
+    edge_table.add_edge(EdgeTableEntry::from_points(p4, p5, 5));
+    edge_table.add_edge(EdgeTableEntry::from_points(p5, p1, 4));
 
     edge_table.sort();
     edge_table.print();
@@ -100,7 +96,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     while let Some(index) = edge_table
         .list
         .iter()
-        .position(|edge| edge.y_lower as i32 == y_scan as i32)
+        .position(|edge| edge.y_lower == y_scan)
     {
         println!(
             "Moving e_{} into active edge table",
@@ -109,7 +105,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         let edge = edge_table.list.remove(index);
 
         // compute values for active edge entry
-        let x_intersect = edge.x_lower;
+        let x_intersect = edge.x_lower as f64;
 
         active_edge_table.list.push(ActiveEdgeTableEntry::new(
             x_intersect,
@@ -124,15 +120,28 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     active_edge_table.print();
 
     let mut iteration = 0;
-    while edge_table.list.len() > 0 && active_edge_table.list.len() > 0 {
+    while edge_table.list.len() > 0 || active_edge_table.list.len() > 0 {
         println!("\n\nIteration: {iteration}, scanline_y = {y_scan}");
 
+        edge_table.sort();
+        active_edge_table.sort();
         edge_table.print();
         active_edge_table.print();
 
         // draw pixel at every edge in AET at (x_intersect, y_scan)
-        for (i, edge) in active_edge_table.list.iter().enumerate() {
-            canvas.set_pixel((edge.x_intersect as i32, y_scan as i32), &BLACK);
+        // for (i, edge) in active_edge_table.list.iter().enumerate() {
+        //     canvas.set_pixel((edge.x_intersect as i32, y_scan as i32), &BLACK);
+        // }
+
+        // draw between x_1_intersect and x_2_intersect
+        if active_edge_table.list.len() >= 2 {
+            for i in 0..(active_edge_table.list.len() as f64 / 2.0) as usize {
+                let mut cur_x = active_edge_table.list[2 * i].x_intersect;
+                while cur_x <= active_edge_table.list[2 * i + 1].x_intersect {
+                    canvas.set_pixel((cur_x.round() as i32, y_scan), &BLACK);
+                    cur_x += 1.0;
+                }
+            }
         }
 
         // remove all edges from AET wich are entirely below y_scan
@@ -154,7 +163,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         }
 
         // increment y_scan
-        y_scan += 1.0;
+        y_scan += 1;
 
         // move all edges from ET with y_lower == y_scan to AET
 
@@ -170,7 +179,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let edge = edge_table.list.remove(index);
 
             // compute values for active edge entry
-            let x_intersect = edge.x_lower;
+            let x_intersect = edge.x_lower as f64;
 
             active_edge_table.list.push(ActiveEdgeTableEntry::new(
                 x_intersect,
@@ -185,12 +194,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         iteration += 1;
     }
 
+    // draw polygon corners
+    // for p in points.iter() {
+    //     canvas.set_pixel((p.x, p.y), &MAGENTA);
+    // }
+
     while window.is_open() && !window.is_key_down(Key::Enter) {
         // render loop
-
-        for p in points.iter() {
-            canvas.set_pixel((p.x as i32, p.y as i32), &MAGENTA);
-        }
 
         window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
     }
