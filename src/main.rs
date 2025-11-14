@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             scale: SCALE,
             resize: false,
             scale_mode: minifb::ScaleMode::UpperLeft,
-            topmost: false,
+            topmost: true,
             transparency: false,
             none: false,
         },

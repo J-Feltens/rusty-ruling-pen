@@ -337,6 +337,11 @@ pub fn draw_polygon_onto_buffer(
 
                 let mut cur_x = edge1.x_intersect;
                 let mut cur_attrs = edge1.attrs_intersect.clone();
+                let mut dattrs = vec![0.0 as f64; cur_attrs.len()];
+                for i in 0..dattrs.len() {
+                    dattrs[i] =
+                        (edge2.attrs_intersect[i] - cur_attrs[i]) / (edge2.x_intersect - cur_x);
+                }
 
                 if verbose {
                     println!("Drawing between edges e_{} and 3_{}", edge1.id, edge2.id);
@@ -351,11 +356,14 @@ pub fn draw_polygon_onto_buffer(
                     );
                     canvas.set_pixel((cur_x.round() as i32, y_scan), &color);
                     cur_x += 1.0;
+                    for i in 0..cur_attrs.len() {
+                        cur_attrs[i] += dattrs[i];
+                    }
                 }
             }
         }
 
-        // increment x_intersect in every edge in AET
+        // increment x_intersect and attributes in every edge in AET
         for edge in active_edge_table.list.iter_mut() {
             edge.x_intersect += edge.dx_dy;
             for i in 0..edge.attrs_intersect.len() {
