@@ -22,6 +22,15 @@ impl Canvas {
         self.buffer = vec![bg_color.as_u32(); self.size_x * self.size_y];
     }
 
+    pub fn checker(&mut self, color_1: &Color, color_2: &Color) {
+        let colors = vec![color_1, color_2];
+        for y in 0..self.size_y {
+            for x in 0..self.size_x {
+                self.set_pixel((x as i32, y as i32), colors[(x + (y % 2)) % 2]);
+            }
+        }
+    }
+
     pub fn get_buffer(&self) -> &Vec<u32> {
         return &self.buffer;
     }
