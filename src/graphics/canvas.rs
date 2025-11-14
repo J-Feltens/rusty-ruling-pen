@@ -1,11 +1,4 @@
-use std::{f64::consts::PI, io::stdout, vec};
-
-use rand::thread_rng;
-
-use crate::{
-    colors::{Color, rgb2u32},
-    util::{Vector2d, Vector3d, map_range},
-};
+use crate::graphics::Color;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Canvas {
@@ -37,10 +30,10 @@ impl Canvas {
         return x >= 0 && (x as usize) < self.size_x && y >= 0 && (y as usize) < self.size_y;
     }
 
-    pub fn draw_dot(&mut self, center: (i32, i32), color: &Color) {
-        if self.integer_coords_in_canvas(center.0, center.1) {
+    pub fn set_pixel(&mut self, coords: (i32, i32), color: &Color) {
+        if self.integer_coords_in_canvas(coords.0, coords.1) {
             self.buffer
-                [((self.size_y as i32 - 1 - center.1) * self.size_x as i32 + center.0) as usize] =
+                [((self.size_y as i32 - 1 - coords.1) * self.size_x as i32 + coords.0) as usize] =
                 color.as_u32();
         }
     }
