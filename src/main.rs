@@ -64,6 +64,8 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // finally, draw polygon
     draw_polygon_onto_buffer(&points, &mut canvas, false);
 
+    println!("Rendertime: {} ms", global_timer.elapsed().as_millis());
+
     while window.is_open() && !window.is_key_down(Key::Enter) {
         // render loop
 
