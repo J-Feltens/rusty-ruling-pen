@@ -1,4 +1,7 @@
-use crate::vectors::{IntegerVector2d, Vector2d};
+use crate::{
+    graphics::{Canvas, Color},
+    vectors::{IntegerVector2d, Vector2d},
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct EdgeTableEntry {
@@ -77,7 +80,11 @@ impl EdgeTable {
         for (i, edge) in self.list.iter().enumerate() {
             println!(
                 "e_{0: <10} | {1: <12} | {2: <12} | {3: <12} | {4: <12}",
-                edge.id, edge.y_lower, edge.x_lower, edge.y_upper, edge.dx_dy
+                edge.id,
+                edge.y_lower,
+                edge.x_lower,
+                edge.y_upper,
+                (edge.dx_dy * 1000.0).round() / 1000.0
             );
         }
     }
@@ -133,8 +140,162 @@ impl ActiveEdgeTable {
         for (i, edge) in self.list.iter().enumerate() {
             println!(
                 "e_{0: <10} | {1: <12} | {2: <12} | {3: <12}",
-                edge.id, edge.x_intersect, edge.y_upper, edge.dx_dy
+                edge.id,
+                (edge.x_intersect * 1000.0).round() / 1000.0,
+                edge.y_upper,
+                (edge.dx_dy * 1000.0).round() / 1000.0
             );
         }
+    }
+}
+
+pub fn draw_polygon_onto_buffer(
+    points: &Vec<IntegerVector2d>,
+    canvas: &mut Canvas,
+    color: &Color,
+    verbose: bool,
+) {
+    // build edge table, ignore horizontal edges
+    let mut edge_table = EdgeTable::new();
+    for i in 0..points.len() {
+        let p1 = points[i % points.len()];
+        let p2 = points[(i + 1) % points.len()];
+        if p1.y != p2.y {
+            edge_table.add_edge(EdgeTableEntry::from_points(p1, p2, i as i32 + 1));
+        }
+    }
+
+    edge_table.sort();
+
+    let mut active_edge_table = ActiveEdgeTable::new();
+
+    /*
+        scanline
+
+        initialize ET
+        set AET to empty
+        set yscan to ylower of first entry in ET
+            move all edges from ET with yscan =| ylower to AET
+
+        while ET not empty or AET not empty
+            sort AET for x
+            draw lines from (AET[0].x,yscan) to (AET[1].x,yscan),
+                from (AET[2].x,yscan) to (AET[3].x,yscan), ……
+            remove all edges from AET with yscan >= yupper
+            for all edges in AET
+                x:= x + 1/m
+            yscan += 1
+            move all edges from ET with yscan == ylower to AET
+    */
+    let mut y_scan = edge_table.list[0].y_lower;
+
+    while let Some(index) = edge_table
+        .list
+        .iter()
+        .position(|edge| edge.y_lower == y_scan)
+    {
+        if verbose {
+            println!(
+                "Moving e_{} into active edge table",
+                edge_table.list[index].id
+            );
+        }
+        let edge = edge_table.list.remove(index);
+
+        // compute values for active edge entry
+        let x_intersect = edge.x_lower as f64;
+
+        active_edge_table.list.push(ActiveEdgeTableEntry::new(
+            x_intersect,
+            edge.y_upper,
+            edge.dx_dy,
+            edge.id,
+        ));
+
+        active_edge_table.sort();
+    }
+
+    let mut iteration = 0;
+    while edge_table.list.len() > 0 || active_edge_table.list.len() > 0 {
+        if verbose {
+            println!("\n--------------------------------------------------\n");
+            println!("Iteration: {iteration}, scanline_y = {y_scan}");
+        }
+        // remove all edges from AET wich are entirely below y_scan
+        while let Some(index) = active_edge_table
+            .list
+            .iter()
+            .position(|edge| y_scan >= edge.y_upper)
+        {
+            if verbose {
+                println!(
+                    "Removing e_{} from active edge table",
+                    active_edge_table.list[index].id
+                );
+            }
+            active_edge_table.list.remove(index);
+        }
+
+        // add all edges from ET with y_lower == y_scan to AET
+        while let Some(index) = edge_table
+            .list
+            .iter()
+            .position(|edge| edge.y_lower as i32 == y_scan as i32)
+        {
+            if verbose {
+                println!(
+                    "Moving e_{} into active edge table",
+                    edge_table.list[index].id
+                );
+            }
+            let edge = edge_table.list.remove(index);
+
+            // compute values for active edge entry
+            let x_intersect = edge.x_lower as f64;
+
+            active_edge_table.list.push(ActiveEdgeTableEntry::new(
+                x_intersect,
+                edge.y_upper,
+                edge.dx_dy,
+                edge.id,
+            ));
+
+            active_edge_table.sort();
+        }
+
+        edge_table.sort();
+        active_edge_table.sort();
+        if verbose {
+            edge_table.print();
+            active_edge_table.print();
+        }
+
+        // draw between x_1_intersect and x_2_intersect
+        if active_edge_table.list.len() >= 2 {
+            for i in 0..(active_edge_table.list.len() as f64 / 2.0) as usize {
+                let mut cur_x = active_edge_table.list[2 * i].x_intersect;
+                if verbose {
+                    println!(
+                        "Drawing between edges e_{} and 3_{}",
+                        active_edge_table.list[2 * i].id,
+                        active_edge_table.list[2 * i + 1].id
+                    );
+                }
+                while cur_x <= active_edge_table.list[2 * i + 1].x_intersect {
+                    canvas.set_pixel((cur_x.round() as i32, y_scan), color);
+                    cur_x += 1.0;
+                }
+            }
+        }
+
+        // increment x_intersect in every edge in AET
+        for edge in active_edge_table.list.iter_mut() {
+            edge.x_intersect += edge.dx_dy;
+        }
+
+        // increment y_scan
+        y_scan += 1;
+
+        iteration += 1;
     }
 }

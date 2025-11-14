@@ -15,6 +15,13 @@ impl IntegerVector2d {
         IntegerVector2d { x: x, y: y }
     }
 
+    pub fn from_floats(x: f64, y: f64) -> IntegerVector2d {
+        IntegerVector2d {
+            x: x.round() as i32,
+            y: y.round() as i32,
+        }
+    }
+
     pub fn origin() -> IntegerVector2d {
         IntegerVector2d { x: (0), y: (0) }
     }
