@@ -1,10 +1,8 @@
-use image::{DynamicImage, GenericImageView, ImageReader, Pixel, Rgba};
+use std::time::Instant;
+
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
-use std::ascii::escape_default;
-use std::collections::LinkedList;
-use std::process::exit;
-use std::{thread, time};
+use std::time;
 
 use crate::graphics::colors::rgb2u32;
 use crate::graphics::scanline::{
@@ -22,9 +20,10 @@ pub mod vectors;
 const SIZE_X: usize = 512;
 const SIZE_Y: usize = 512;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(100);
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    let mut global_timer = Instant::now();
+
     let mut window = Window::new(
         "RRP (Rusty Ruling Pen)",
         SIZE_X,
@@ -63,11 +62,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
 
     // finally, draw polygon
-    draw_polygon_onto_buffer(&points, &mut canvas, &BLACK, false);
+    draw_polygon_onto_buffer(&points, &mut canvas, false);
 
     while window.is_open() && !window.is_key_down(Key::Enter) {
         // render loop
 
+        // update minifb with new buffer
         window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
     }
 

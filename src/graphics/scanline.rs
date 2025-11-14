@@ -198,12 +198,7 @@ impl ActiveEdgeTable {
     }
 }
 
-pub fn draw_polygon_onto_buffer(
-    points: &Vec<IntegerVector2d>,
-    canvas: &mut Canvas,
-    color: &Color,
-    verbose: bool,
-) {
+pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canvas, verbose: bool) {
     // build edge table, ignore horizontal edges
     let mut edge_table = EdgeTable::new();
     for i in 0..points.len() {
