@@ -44,18 +44,18 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, &WHITE);
 
-    // canvas.checker(
-    //     &WHITE,
-    //     &Color {
-    //         r: (0),
-    //         g: (0),
-    //         b: (0),
-    //         a: (0.1),
-    //     },
-    // );
+    canvas.checker(
+        &WHITE,
+        &Color {
+            r: (0.0),
+            g: (0.0),
+            b: (0.0),
+            a: (0.1),
+        },
+    );
 
     // define polygon
-    let p1 = IntegerVector2d::new(2, 5, vec![1.0, 0.0, 0.0, 0.0]);
+    let p1 = IntegerVector2d::new(2, 5, vec![1.0, 0.0, 0.0, 1.0]);
     let p2 = IntegerVector2d::new(14, 14, vec![0.0, 1.0, 0.0, 0.0]);
     let p3 = IntegerVector2d::new(8, 2, vec![0.0, 0.0, 1.0, 1.0]);
 
