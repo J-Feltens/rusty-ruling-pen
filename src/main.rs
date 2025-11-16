@@ -1,10 +1,8 @@
-use image::{DynamicImage, GenericImageView, ImageReader, Pixel, Rgba};
+use std::time::Instant;
+
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
-use std::ascii::escape_default;
-use std::collections::LinkedList;
-use std::process::exit;
-use std::{thread, time};
+use std::time;
 
 use crate::graphics::colors::rgb2u32;
 use crate::graphics::scanline::{
@@ -13,6 +11,7 @@ use crate::graphics::scanline::{
 use crate::graphics::{
     BLACK, BLUE, CYAN, Canvas, Color, EdgeTable, GREEN, MAGENTA, RED, WHITE, YELLOW,
 };
+use crate::vectors::ivec2d::Polygon2d;
 use crate::vectors::{IntegerVector2d, Vector2d};
 
 pub mod graphics;
@@ -22,9 +21,10 @@ pub mod vectors;
 const SIZE_X: usize = 512;
 const SIZE_Y: usize = 512;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(100);
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    let mut global_timer = Instant::now();
+
     let mut window = Window::new(
         "RRP (Rusty Ruling Pen)",
         SIZE_X,
@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             scale: SCALE,
             resize: false,
             scale_mode: minifb::ScaleMode::UpperLeft,
-            topmost: false,
+            topmost: true,
             transparency: false,
             none: false,
         },
@@ -44,22 +44,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, &WHITE);
 
     // define polygon
-    let scale = 30.0;
+    let scale = 30;
 
-    let p1 = Vector2d::new(2.0 * scale, 5.0 * scale);
-    let p2 = Vector2d::new(14.0 * scale, 14.0 * scale);
-    let p3 = Vector2d::new(8.0 * scale, 2.0 * scale);
+    let p1 = IntegerVector2d::new(2 * scale, 5 * scale, vec![1.0, 0.0, 0.0]);
+    let p2 = IntegerVector2d::new(14 * scale, 14 * scale, vec![0.0, 1.0, 0.0]);
+    let p3 = IntegerVector2d::new(8 * scale, 2 * scale, vec![0.0, 0.0, 1.0]);
 
-    let mut points = vec![p1, p2, p3];
+    let triangle = Polygon2d::new(vec![p1, p2, p3]);
 
-    // cast polygon to integer coords
-    let integer_points = points
-        .clone()
-        .into_iter()
-        .map(|x| IntegerVector2d::from_floats(x.x, x.y))
-        .collect::<Vec<_>>();
-
-    // reset canvas to checkerboard
     canvas.checker(
         &WHITE,
         &Color {
@@ -71,11 +63,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
 
     // finally, draw polygon
-    draw_polygon_onto_buffer(&integer_points, &mut canvas, &BLACK, false);
+    draw_polygon_onto_buffer(&triangle.vertices, &mut canvas, false);
+
+    println!("Rendertime: {} ms", global_timer.elapsed().as_millis());
 
     while window.is_open() && !window.is_key_down(Key::Enter) {
         // render loop
 
+        // update minifb with new buffer
         window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
     }
 

@@ -1,29 +1,38 @@
-// integer
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /*
-    Some simple vector utilites to kick it off
+    An extended version of Vector2d used for rasterization, featuring:
+
+    - i32 integer coords
+    - a list of attributes, which will be interpolated using gouraud shading technique
 */
-#[derive(Copy, Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct IntegerVector2d {
     pub x: i32,
     pub y: i32,
+
+    pub attrs: Vec<f64>, // attributes stored here will be interpolated using gouraud shading
 }
 
 impl IntegerVector2d {
-    pub fn new(x: i32, y: i32) -> IntegerVector2d {
-        IntegerVector2d { x: x, y: y }
+    pub fn new(x: i32, y: i32, attrs: Vec<f64>) -> IntegerVector2d {
+        IntegerVector2d { x, y, attrs }
     }
 
-    pub fn from_floats(x: f64, y: f64) -> IntegerVector2d {
+    pub fn from_floats(x: f64, y: f64, attrs: Vec<f64>) -> IntegerVector2d {
         IntegerVector2d {
             x: x.round() as i32,
             y: y.round() as i32,
+            attrs,
         }
     }
 
     pub fn origin() -> IntegerVector2d {
-        IntegerVector2d { x: (0), y: (0) }
+        IntegerVector2d {
+            x: (0),
+            y: (0),
+            attrs: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, v: &IntegerVector2d) {
@@ -41,102 +50,16 @@ impl IntegerVector2d {
     }
 }
 
-// v1 + v2
-impl Add for IntegerVector2d {
-    type Output = IntegerVector2d;
-
-    fn add(self, rhs: IntegerVector2d) -> IntegerVector2d {
-        IntegerVector2d {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
+/*
+    A simple struct to store a polygon consisting of n IntegerVector2ds
+*/
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Polygon2d {
+    pub vertices: Vec<IntegerVector2d>,
 }
 
-// v1 += v2
-impl AddAssign for IntegerVector2d {
-    fn add_assign(&mut self, rhs: IntegerVector2d) {
-        self.x += rhs.x;
-        self.y += rhs.y;
-    }
-}
-
-// v1 - v2
-impl Sub for IntegerVector2d {
-    type Output = IntegerVector2d;
-
-    fn sub(self, rhs: IntegerVector2d) -> IntegerVector2d {
-        IntegerVector2d {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-}
-
-// v1 -= v2
-impl SubAssign for IntegerVector2d {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-    }
-}
-
-// v * scalar
-impl Mul<i32> for IntegerVector2d {
-    type Output = IntegerVector2d;
-
-    fn mul(self, rhs: i32) -> IntegerVector2d {
-        IntegerVector2d {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
-    }
-}
-
-// v *= scalar
-impl MulAssign<i32> for IntegerVector2d {
-    fn mul_assign(&mut self, rhs: i32) {
-        self.x *= rhs;
-        self.y *= rhs;
-    }
-}
-
-// v / scalar
-impl Div<i32> for IntegerVector2d {
-    type Output = IntegerVector2d;
-
-    fn div(self, rhs: i32) -> IntegerVector2d {
-        IntegerVector2d {
-            x: self.x / rhs,
-            y: self.y / rhs,
-        }
-    }
-}
-
-// v /= scalar
-impl DivAssign<i32> for IntegerVector2d {
-    fn div_assign(&mut self, rhs: i32) {
-        self.x /= rhs;
-        self.y /= rhs;
-    }
-}
-
-// v * vector
-impl Mul<IntegerVector2d> for IntegerVector2d {
-    type Output = IntegerVector2d;
-
-    fn mul(self, v: IntegerVector2d) -> IntegerVector2d {
-        IntegerVector2d {
-            x: self.x * v.x,
-            y: self.y * v.y,
-        }
-    }
-}
-
-// v *= vector
-impl MulAssign<IntegerVector2d> for IntegerVector2d {
-    fn mul_assign(&mut self, v: IntegerVector2d) {
-        self.x *= v.x;
-        self.y *= v.y;
+impl Polygon2d {
+    pub fn new(vertices: Vec<IntegerVector2d>) -> Polygon2d {
+        Polygon2d { vertices }
     }
 }

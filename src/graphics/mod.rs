@@ -4,5 +4,5 @@ pub mod scanline;
 
 // Re-export so callers can write `sprites::Sprite` directly
 pub use canvas::Canvas;
-pub use colors::{BLACK, BLUE, CYAN, Color, GREEN, MAGENTA, RED, WHITE, YELLOW};
+pub use colors::{BLACK, BLUE, CYAN, Color, GREEN, MAGENTA, RED, WHITE, YELLOW, rgb2u32};
 pub use scanline::EdgeTable;
