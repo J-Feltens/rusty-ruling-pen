@@ -11,6 +11,7 @@ use crate::graphics::scanline::{
 use crate::graphics::{
     BLACK, BLUE, CYAN, Canvas, Color, EdgeTable, GREEN, MAGENTA, RED, WHITE, YELLOW,
 };
+use crate::util::interpolate1d;
 use crate::vectors::ivec2d::Polygon2d;
 use crate::vectors::{IntegerVector2d, Vector2d};
 
@@ -18,9 +19,9 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 512;
-const SIZE_Y: usize = 512;
-const SCALE: minifb::Scale = minifb::Scale::X1;
+const SIZE_X: usize = 16;
+const SIZE_Y: usize = 16;
+const SCALE: minifb::Scale = minifb::Scale::X32;
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut global_timer = Instant::now();
@@ -43,24 +44,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, &WHITE);
 
-    // define polygon
-    let scale = 30;
+    // canvas.checker(
+    //     &WHITE,
+    //     &Color {
+    //         r: (0),
+    //         g: (0),
+    //         b: (0),
+    //         a: (0.1),
+    //     },
+    // );
 
-    let p1 = IntegerVector2d::new(2 * scale, 5 * scale, vec![1.0, 0.0, 0.0]);
-    let p2 = IntegerVector2d::new(14 * scale, 14 * scale, vec![0.0, 1.0, 0.0]);
-    let p3 = IntegerVector2d::new(8 * scale, 2 * scale, vec![0.0, 0.0, 1.0]);
+    // define polygon
+    let p1 = IntegerVector2d::new(2, 5, vec![1.0, 0.0, 0.0, 0.0]);
+    let p2 = IntegerVector2d::new(14, 14, vec![0.0, 1.0, 0.0, 0.0]);
+    let p3 = IntegerVector2d::new(8, 2, vec![0.0, 0.0, 1.0, 1.0]);
 
     let triangle = Polygon2d::new(vec![p1, p2, p3]);
-
-    canvas.checker(
-        &WHITE,
-        &Color {
-            r: (200),
-            g: (200),
-            b: (200),
-            a: (1.0),
-        },
-    );
 
     // finally, draw polygon
     draw_polygon_onto_buffer(&triangle.vertices, &mut canvas, false);
