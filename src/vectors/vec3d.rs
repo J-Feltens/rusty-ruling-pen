@@ -1,5 +1,7 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
+use crate::vectors::{IntegerVector2d, Vector2d};
+
 /*
     3d implementation of Vector2d
 */
@@ -55,6 +57,14 @@ impl Vector3d {
 
     pub fn length(&self) -> f64 {
         return ((self.x * self.x) + (self.y * self.y) + (self.z * self.z)).sqrt();
+    }
+
+    pub fn cross(&self, v: Vector3d) -> Vector3d {
+        return Vector3d::new(
+            self.y * v.z - self.z * v.y,
+            self.z * v.x - self.x * v.z,
+            self.x * v.y - self.y * v.x,
+        );
     }
 }
 

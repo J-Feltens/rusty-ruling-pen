@@ -49,10 +49,10 @@ impl Canvas {
                 ((self.size_y as i32 - 1 - coords.1) * self.size_x as i32 + coords.0) as usize;
 
             let color_from = &Color::from_u32(self.buffer[integer_coord_in_buffer]);
-            println!(
-                "Blending from ({}, {}, {}) to ({}, {}, {}) with factor {}",
-                color_from.r, color_from.g, color_from.b, color.r, color.g, color.b, color.a
-            );
+            // println!(
+            //     "Blending from ({}, {}, {}) to ({}, {}, {}) with factor {}",
+            //     color_from.r, color_from.g, color_from.b, color.r, color.g, color.b, color.a
+            // );
 
             // alpha-blend
             self.buffer[integer_coord_in_buffer] = alpha_blend(color_from, &color).as_u32();

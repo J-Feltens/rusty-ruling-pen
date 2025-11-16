@@ -212,7 +212,9 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
             ));
         }
     }
-
+    if edge_table.list.len() <= 0 {
+        return;
+    }
     edge_table.sort();
 
     let mut active_edge_table = ActiveEdgeTable::new();

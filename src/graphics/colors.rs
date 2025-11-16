@@ -34,6 +34,10 @@ impl Color {
             | (((self.g * 255.0) as u32) << 8)
             | ((self.b * 255.0) as u32)
     }
+
+    pub fn as_f64_vec(self) -> Vec<f64> {
+        return vec![self.r, self.g, self.b, self.a];
+    }
 }
 
 pub fn rgb2u32(r: u8, g: u8, b: u8) -> u32 {
