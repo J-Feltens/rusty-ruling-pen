@@ -1,4 +1,3 @@
-// integer
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /*
@@ -48,5 +47,19 @@ impl IntegerVector2d {
 
     pub fn length(&self) -> f64 {
         return (((self.x * self.x) + (self.y * self.y)) as f64).sqrt();
+    }
+}
+
+/*
+    A simple struct to store a polygon consisting of n IntegerVector2ds
+*/
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Polygon2d {
+    pub vertices: Vec<IntegerVector2d>,
+}
+
+impl Polygon2d {
+    pub fn new(vertices: Vec<IntegerVector2d>) -> Polygon2d {
+        Polygon2d { vertices }
     }
 }

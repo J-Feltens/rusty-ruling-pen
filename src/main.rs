@@ -11,6 +11,7 @@ use crate::graphics::scanline::{
 use crate::graphics::{
     BLACK, BLUE, CYAN, Canvas, Color, EdgeTable, GREEN, MAGENTA, RED, WHITE, YELLOW,
 };
+use crate::vectors::ivec2d::Polygon2d;
 use crate::vectors::{IntegerVector2d, Vector2d};
 
 pub mod graphics;
@@ -49,7 +50,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let p2 = IntegerVector2d::new(14 * scale, 14 * scale, vec![0.0, 1.0, 0.0]);
     let p3 = IntegerVector2d::new(8 * scale, 2 * scale, vec![0.0, 0.0, 1.0]);
 
-    let mut points = vec![p1, p2, p3];
+    let triangle = Polygon2d::new(vec![p1, p2, p3]);
 
     canvas.checker(
         &WHITE,
@@ -62,7 +63,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
 
     // finally, draw polygon
-    draw_polygon_onto_buffer(&points, &mut canvas, false);
+    draw_polygon_onto_buffer(&triangle.vertices, &mut canvas, false);
 
     println!("Rendertime: {} ms", global_timer.elapsed().as_millis());
 
