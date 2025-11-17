@@ -46,17 +46,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, &WHITE);
-
-    canvas.checker(
-        &WHITE,
-        &Color {
-            r: (0.0),
-            g: (0.0),
-            b: (0.0),
-            a: (0.1),
-        },
-    );
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
     let red = Color::new(1.0, 0.0, 0.0, 0.3);
     let green = Color::new(0.0, 1.0, 0.0, 0.3);
@@ -67,16 +57,17 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     // cube
     let cube_origin = Vector3d::new(-10.0, -10.0, 0.0);
+    let cube_size = 100.0;
     // vertices
-    let v1 = Vector3d::new(0.0, 0.0, 0.0);
-    let v2 = Vector3d::new(20.0, 0.0, 0.0);
-    let v3 = Vector3d::new(20.0, 20.0, 0.0);
-    let v4 = Vector3d::new(0.0, 20.0, 0.0);
+    let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
+    let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
+    let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
+    let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
 
-    let v5 = Vector3d::new(0.0, 0.0, 20.0);
-    let v6 = Vector3d::new(20.0, 0.0, 20.0);
-    let v7 = Vector3d::new(20.0, 20.0, 20.0);
-    let v8 = Vector3d::new(0.0, 20.0, 20.0);
+    let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
+    let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
+    let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
+    let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
 
     // faces
     let mut triangles = vec![
@@ -109,21 +100,82 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         return (sx, sy);
     }
 
-    let mut angle = 0.0 as f64;
-    let angle_increment = 0.01 as f64;
-    let radius = 100.0;
+    fn to_screen_perspective(p_cam: Vector3d, focal_length: f64) -> (i32, i32) {
+        // Cull points behind camera or on the plane
+        if p_cam.z >= 0.0 {
+            return (0, 0);
+        }
 
-    while window.is_open() && !window.is_key_down(Key::Enter) {
+        let x_ndc = -focal_length * p_cam.x / p_cam.z;
+        let y_ndc = -focal_length * p_cam.y / p_cam.z;
+
+        let sx = (x_ndc + (SIZE_X as f64) / 2.0).round() as i32;
+        let sy = ((SIZE_Y as f64) / 2.0 - y_ndc).round() as i32;
+
+        return (sx, sy);
+    }
+
+    let mut cam_pos = Vector3d::new(150.0, 130.0, 20.0);
+    let mut cam_look_at = Vector3d::new(0.0, 0.0, 0.0);
+    let mut fov = 120.0;
+    let cam_movement_increment = 2.0;
+
+    while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Q) {
         // render loop
-        canvas.checker(&WHITE, &WHITE);
+        canvas.reset();
+        canvas.checker(
+            &WHITE,
+            &Color {
+                r: (0.0),
+                g: (0.0),
+                b: (0.0),
+                a: (0.1),
+            },
+        );
 
-        angle += angle_increment;
-        let e_x = angle.cos() * radius;
-        let e_y = angle.sin() * radius;
-        let e_z = 20.0;
+        // get active keys
+        let keys_down = window.get_keys();
+        if keys_down.contains(&Key::W) {
+            cam_pos.x -= cam_movement_increment;
+            cam_look_at.x -= cam_movement_increment;
+        }
+        if keys_down.contains(&Key::A) {
+            cam_pos.y -= cam_movement_increment;
+            cam_look_at.y -= cam_movement_increment;
+        }
+        if keys_down.contains(&Key::S) {
+            cam_pos.x += cam_movement_increment;
+            cam_look_at.x += cam_movement_increment;
+        }
+        if keys_down.contains(&Key::D) {
+            cam_pos.y += cam_movement_increment;
+            cam_look_at.y += cam_movement_increment;
+        }
+        if keys_down.contains(&Key::O) {
+            fov -= cam_movement_increment;
+        }
+        if keys_down.contains(&Key::P) {
+            fov += cam_movement_increment;
+        }
+        if keys_down.contains(&Key::Right) {
+            let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
+            let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
+            look_at_xy.rotate_around_point(-0.02, cam_pos_xy);
+            cam_look_at.x = look_at_xy.x;
+            cam_look_at.y = look_at_xy.y;
+        }
+        if keys_down.contains(&Key::Left) {
+            let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
+            let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
+            look_at_xy.rotate_around_point(0.02, cam_pos_xy);
+            cam_look_at.x = look_at_xy.x;
+            cam_look_at.y = look_at_xy.y;
+        }
 
-        let e = Vector3d::new(e_x, e_y, e_z); // camera pos
-        let a = Vector3d::new(0.0, 0.0, 0.0); // look at
+        // let e = Vector3d::new(e_x, e_y, e_z); // camera pos
+        // let a = Vector3d::new(0.0, 0.0, 0.0); // look at
+        let e = cam_pos;
+        let a = cam_look_at;
         let t = Vector3d::new(0.0, 0.0, 1.0); // camera up
 
         let g = a - e;
@@ -139,9 +191,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let p2_cam = camera_space_matrix.times_vec(triangle.p2 - e);
             let p3_cam = camera_space_matrix.times_vec(triangle.p3 - e);
 
-            let (x1, y1) = to_screen_ortho(p1_cam, 5.0);
-            let (x2, y2) = to_screen_ortho(p2_cam, 5.0);
-            let (x3, y3) = to_screen_ortho(p3_cam, 5.0);
+            let (x1, y1) = to_screen_perspective(p1_cam, fov);
+            let (x2, y2) = to_screen_perspective(p2_cam, fov);
+            let (x3, y3) = to_screen_perspective(p3_cam, fov);
 
             draw_polygon_onto_buffer(
                 &vec![
