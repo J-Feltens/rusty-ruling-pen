@@ -1,4 +1,9 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::{
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+    vec,
+};
+
+use crate::vectors::Vector2d;
 
 /*
     An extended version of Vector2d used for rasterization, featuring:
@@ -23,6 +28,14 @@ impl IntegerVector2d {
         IntegerVector2d {
             x: x.round() as i32,
             y: y.round() as i32,
+            attrs,
+        }
+    }
+
+    pub fn from_vector2d(vector: Vector2d, attrs: Vec<f64>) -> IntegerVector2d {
+        IntegerVector2d {
+            x: vector.x.round() as i32,
+            y: vector.y.round() as i32,
             attrs,
         }
     }
