@@ -37,6 +37,15 @@ impl Vector3d {
         self.z *= s;
     }
 
+    pub fn normalize(&self) -> Self {
+        let len = self.length();
+        Self {
+            x: self.x / len,
+            y: self.y / len,
+            z: self.z / len,
+        }
+    }
+
     pub fn rotate(&mut self, phi: f64) {
         // let x: f64 = self.x * f64::cos(phi) - self.y * f64::sin(phi);
         // let y: f64 = self.x * f64::sin(phi) + self.y * f64::cos(phi);

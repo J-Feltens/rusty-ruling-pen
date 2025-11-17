@@ -48,12 +48,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
-    let red = Color::new(1.0, 0.0, 0.0, 0.3);
-    let green = Color::new(0.0, 1.0, 0.0, 0.3);
-    let blue = Color::new(0.0, 0.0, 1.0, 0.3);
-    let cyan = Color::new(1.0, 0.0, 1.0, 0.3);
-    let yellow = Color::new(1.0, 1.0, 0.0, 0.3);
-    let magenta = Color::new(0.0, 1.0, 1.0, 0.3);
+    let red = Color::new(1.0, 0.0, 0.0, 0.6);
+    let green = Color::new(0.0, 1.0, 0.0, 0.6);
+    let blue = Color::new(0.0, 0.0, 1.0, 0.6);
+    let cyan = Color::new(1.0, 0.0, 1.0, 0.6);
+    let yellow = Color::new(1.0, 1.0, 0.0, 0.6);
+    let magenta = Color::new(0.0, 1.0, 1.0, 0.6);
 
     // cube
     let cube_origin = Vector3d::new(-10.0, -10.0, 0.0);
@@ -103,6 +103,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     fn to_screen_perspective(p_cam: Vector3d, focal_length: f64) -> (i32, i32) {
         // Cull points behind camera or on the plane
         if p_cam.z >= 0.0 {
+            println!("Culling!!");
             return (0, 0);
         }
 
@@ -117,8 +118,8 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut cam_pos = Vector3d::new(150.0, 130.0, 20.0);
     let mut cam_look_at = Vector3d::new(0.0, 0.0, 0.0);
+    let z_up = Vector3d::new(0.0, 0.0, 1.0); // camera up
     let mut fov = 120.0;
-    let cam_movement_increment = 2.0;
 
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Q) {
         // render loop
@@ -133,30 +134,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             },
         );
 
+        // calculate movement direction
+        let left = z_up.cross(cam_look_at).normalize();
+        let right = left * -1.0;
+
         // get active keys
         let keys_down = window.get_keys();
-        if keys_down.contains(&Key::W) {
-            cam_pos.x -= cam_movement_increment;
-            cam_look_at.x -= cam_movement_increment;
-        }
-        if keys_down.contains(&Key::A) {
-            cam_pos.y -= cam_movement_increment;
-            cam_look_at.y -= cam_movement_increment;
-        }
-        if keys_down.contains(&Key::S) {
-            cam_pos.x += cam_movement_increment;
-            cam_look_at.x += cam_movement_increment;
-        }
-        if keys_down.contains(&Key::D) {
-            cam_pos.y += cam_movement_increment;
-            cam_look_at.y += cam_movement_increment;
-        }
-        if keys_down.contains(&Key::O) {
-            fov -= cam_movement_increment;
-        }
-        if keys_down.contains(&Key::P) {
-            fov += cam_movement_increment;
-        }
         if keys_down.contains(&Key::Right) {
             let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
             let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
@@ -176,7 +159,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         // let a = Vector3d::new(0.0, 0.0, 0.0); // look at
         let e = cam_pos;
         let a = cam_look_at;
-        let t = Vector3d::new(0.0, 0.0, 1.0); // camera up
+        let t = z_up;
 
         let g = a - e;
         let w = (g * -1.0) / g.length();

@@ -58,6 +58,8 @@ impl Canvas {
 
             // alpha-blend
             self.buffer[integer_coord_in_buffer] = alpha_blend(color_from, &color).as_u32();
+        } else {
+            println!("Drawing outside of canvas!");
         }
     }
 
