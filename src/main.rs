@@ -4,7 +4,7 @@ use std::time::Instant;
 use image::imageops::FilterType::Triangle;
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
-use std::time;
+use std::{thread, time};
 
 use crate::graphics::colors::rgb2u32;
 use crate::graphics::scanline::{
@@ -22,9 +22,10 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 64;
-const SIZE_Y: usize = 64;
-const SCALE: minifb::Scale = minifb::Scale::X8;
+const SIZE_X: usize = 512;
+const SIZE_Y: usize = 512;
+const SCALE: minifb::Scale = minifb::Scale::X1;
+const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(0);
 
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut global_timer = Instant::now();
@@ -102,14 +103,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         triangle.p3 += cube_origin;
     }
 
-    fn to_screen_ortho(p_cam: Vector3d) -> (i32, i32) {
-        let sx = (p_cam.x + (SIZE_X as f64) / 2.0).round() as i32;
-        let sy = ((SIZE_Y as f64) / 2.0 - p_cam.y).round() as i32;
+    fn to_screen_ortho(p_cam: Vector3d, zoom_fac: f64) -> (i32, i32) {
+        let sx = (zoom_fac * p_cam.x + (SIZE_X as f64) / 2.0).round() as i32;
+        let sy = ((SIZE_Y as f64) / 2.0 - zoom_fac * p_cam.y).round() as i32;
         return (sx, sy);
     }
 
     let mut angle = 0.0 as f64;
-    let angle_increment = 0.1 as f64;
+    let angle_increment = 0.01 as f64;
     let radius = 100.0;
 
     while window.is_open() && !window.is_key_down(Key::Enter) {
@@ -119,8 +120,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         angle += angle_increment;
         let e_x = angle.cos() * radius;
         let e_y = angle.sin() * radius;
+        let e_z = 20.0;
 
-        let e = Vector3d::new(e_x, e_y, 20.0); // camera pos
+        let e = Vector3d::new(e_x, e_y, e_z); // camera pos
         let a = Vector3d::new(0.0, 0.0, 0.0); // look at
         let t = Vector3d::new(0.0, 0.0, 1.0); // camera up
 
@@ -137,9 +139,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let p2_cam = camera_space_matrix.times_vec(triangle.p2 - e);
             let p3_cam = camera_space_matrix.times_vec(triangle.p3 - e);
 
-            let (x1, y1) = to_screen_ortho(p1_cam);
-            let (x2, y2) = to_screen_ortho(p2_cam);
-            let (x3, y3) = to_screen_ortho(p3_cam);
+            let (x1, y1) = to_screen_ortho(p1_cam, 5.0);
+            let (x2, y2) = to_screen_ortho(p2_cam, 5.0);
+            let (x3, y3) = to_screen_ortho(p3_cam, 5.0);
 
             draw_polygon_onto_buffer(
                 &vec![
@@ -157,6 +159,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         println!("Rendertime: {} ms", global_timer.elapsed().as_millis());
         global_timer = Instant::now();
+        thread::sleep(ANIM_INTERVAL);
     }
 
     Ok(())
