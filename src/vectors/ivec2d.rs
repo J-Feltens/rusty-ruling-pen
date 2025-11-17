@@ -75,4 +75,5 @@ impl Polygon2d {
     pub fn new(vertices: Vec<IntegerVector2d>) -> Polygon2d {
         Polygon2d { vertices }
     }
+    
 }

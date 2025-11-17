@@ -140,14 +140,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         // get active keys
         let keys_down = window.get_keys();
-        if keys_down.contains(&Key::Right) {
+        if keys_down.contains(&Key::D) {
             let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
             let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
             look_at_xy.rotate_around_point(-0.02, cam_pos_xy);
             cam_look_at.x = look_at_xy.x;
             cam_look_at.y = look_at_xy.y;
         }
-        if keys_down.contains(&Key::Left) {
+        if keys_down.contains(&Key::A) {
             let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
             let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
             look_at_xy.rotate_around_point(0.02, cam_pos_xy);
@@ -174,9 +174,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let p2_cam = camera_space_matrix.times_vec(triangle.p2 - e);
             let p3_cam = camera_space_matrix.times_vec(triangle.p3 - e);
 
-            let (x1, y1) = to_screen_perspective(p1_cam, fov);
-            let (x2, y2) = to_screen_perspective(p2_cam, fov);
-            let (x3, y3) = to_screen_perspective(p3_cam, fov);
+            // let (x1, y1) = to_screen_perspective(p1_cam, fov);
+            // let (x2, y2) = to_screen_perspective(p2_cam, fov);
+            // let (x3, y3) = to_screen_perspective(p3_cam, fov);
+
+            let (x1, y1) = to_screen_ortho(p1_cam, 1.0);
+            let (x2, y2) = to_screen_ortho(p2_cam, 1.0);
+            let (x3, y3) = to_screen_ortho(p3_cam, 1.0);
 
             draw_polygon_onto_buffer(
                 &vec![

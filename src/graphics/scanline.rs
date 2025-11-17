@@ -199,8 +199,46 @@ impl ActiveEdgeTable {
 }
 
 pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canvas, verbose: bool) {
+    /*
+        implements scanline algorithm with some extended features/bugs courtesy of yours truly.
+
+        as usual based on Marc Stammingers lecture slides:
+
+        initialize ET
+        set AET to empty
+        set yscan to ylower of first entry in ET
+            move all edges from ET with yscan =| ylower to AET
+
+        while ET not empty or AET not empty
+            sort AET for x
+            draw lines from (AET[0].x,yscan) to (AET[1].x,yscan),
+                from (AET[2].x,yscan) to (AET[3].x,yscan), ……
+            remove all edges from AET with yscan >= yupper
+            for all edges in AET
+                x:= x + 1/m
+            yscan += 1
+            move all edges from ET with yscan == ylower to AET
+    */
+
+    if points.len() <= 2 {
+        return; // a line ain't enough for a _poly_gon
+    }
+
+    // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
+
+    // total culling of all polygons that are ever so slightly out of bounds.
+    // will need major revamp to compute partial out-of-bounds polygons, something along the lines of
+    // intersection with boundary vectors, linear interpolation
+    let prev_point = points[0].clone();
+    for i in 0..points.len() {
+        if canvas.integer_coords_in_canvas(points[i].x, points[i].y) {
+            return;
+        }
+    }
+
     // build edge table, ignore horizontal edges
     let mut edge_table = EdgeTable::new();
+
     for i in 0..points.len() {
         let p1 = &points[i % points.len()];
         let p2 = &points[(i + 1) % points.len()];
@@ -219,24 +257,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
 
     let mut active_edge_table = ActiveEdgeTable::new();
 
-    /*
-        scanline
-
-        initialize ET
-        set AET to empty
-        set yscan to ylower of first entry in ET
-            move all edges from ET with yscan =| ylower to AET
-
-        while ET not empty or AET not empty
-            sort AET for x
-            draw lines from (AET[0].x,yscan) to (AET[1].x,yscan),
-                from (AET[2].x,yscan) to (AET[3].x,yscan), ……
-            remove all edges from AET with yscan >= yupper
-            for all edges in AET
-                x:= x + 1/m
-            yscan += 1
-            move all edges from ET with yscan == ylower to AET
-    */
     let mut y_scan = edge_table.list[0].y_lower;
 
     while let Some(index) = edge_table
