@@ -229,7 +229,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
     // total culling of all polygons that are ever so slightly out of bounds.
     // will need major revamp to compute partial out-of-bounds polygons, something along the lines of
     // intersection with boundary vectors, linear interpolationd
-    let prev_point = points[0].clone();
     for i in 0..points.len() {
         if !canvas.integer_coords_in_canvas(points[i].x, points[i].y) {
             return;

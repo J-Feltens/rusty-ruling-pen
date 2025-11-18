@@ -100,11 +100,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         return (sx, sy);
     }
 
-    fn to_screen_perspective(p_cam: Vector3d, focal_length: f64) -> (i32, i32) {
+    fn to_screen_perspective(p_cam: Vector3d, focal_length: f64) -> Option<(i32, i32)> {
         // Cull points behind camera or on the plane
-        if p_cam.z >= 0.0 {
+        if p_cam.z >= 0.001 {
             println!("Culling!!");
-            return (0, 0);
+            return None;
         }
 
         let x_ndc = -focal_length * p_cam.x / p_cam.z;
@@ -113,15 +113,15 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         let sx = (x_ndc + (SIZE_X as f64) / 2.0).round() as i32;
         let sy = ((SIZE_Y as f64) / 2.0 - y_ndc).round() as i32;
 
-        return (sx, sy);
+        return Some((sx, sy));
     }
 
     let mut cam_pos = Vector3d::new(150.0, 130.0, 20.0);
-    let mut cam_look_at = Vector3d::new(0.0, 0.0, 0.0);
+    let mut cam_look_at = Vector3d::new(1.0, 0.0, 0.0);
     let z_up = Vector3d::new(0.0, 0.0, 1.0); // camera up
     let mut fov = 120.0;
 
-    while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Q) {
+    while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         // render loop
         canvas.reset();
         canvas.checker(
@@ -134,25 +134,24 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             },
         );
 
-        // calculate movement direction
-        let left = z_up.cross(cam_look_at).normalize();
-        let right = left * -1.0;
-
         // get active keys
         let keys_down = window.get_keys();
-        if keys_down.contains(&Key::D) {
-            let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
-            let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
-            look_at_xy.rotate_around_point(-0.02, cam_pos_xy);
-            cam_look_at.x = look_at_xy.x;
-            cam_look_at.y = look_at_xy.y;
+        if keys_down.contains(&Key::W) {
+            let increment = cam_look_at.clone().normalize();
+            cam_pos.add(&(increment * -1.0));
+            cam_look_at.add(&(increment * -1.0));
         }
         if keys_down.contains(&Key::A) {
-            let mut look_at_xy = Vector2d::new(cam_look_at.x, cam_look_at.y);
-            let cam_pos_xy = Vector2d::new(cam_pos.x, cam_pos.y);
-            look_at_xy.rotate_around_point(0.02, cam_pos_xy);
-            cam_look_at.x = look_at_xy.x;
-            cam_look_at.y = look_at_xy.y;
+            let increment = cam_look_at.clone() * 10.0;
+            cam_pos.add(&(increment.cross(z_up).normalize()));
+        }
+        if keys_down.contains(&Key::S) {
+            let increment = cam_look_at.clone() * 10.0;
+            cam_pos.add(&(increment.normalize()));
+        }
+        if keys_down.contains(&Key::D) {
+            let increment = cam_look_at.clone() * 10.0;
+            cam_pos.add(&(increment.cross(z_up).normalize() * -1.0));
         }
 
         // let e = Vector3d::new(e_x, e_y, e_z); // camera pos
@@ -174,13 +173,18 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let p2_cam = camera_space_matrix.times_vec(triangle.p2 - e);
             let p3_cam = camera_space_matrix.times_vec(triangle.p3 - e);
 
-            // let (x1, y1) = to_screen_perspective(p1_cam, fov);
-            // let (x2, y2) = to_screen_perspective(p2_cam, fov);
-            // let (x3, y3) = to_screen_perspective(p3_cam, fov);
+            let p1_perspective = to_screen_perspective(p1_cam, fov);
+            let p2_perspective = to_screen_perspective(p2_cam, fov);
+            let p3_perspective = to_screen_perspective(p3_cam, fov);
 
-            let (x1, y1) = to_screen_ortho(p1_cam, 1.0);
-            let (x2, y2) = to_screen_ortho(p2_cam, 1.0);
-            let (x3, y3) = to_screen_ortho(p3_cam, 1.0);
+            let (x1, y1, x2, y2, x3, y3) = match (p1_perspective, p2_perspective, p3_perspective) {
+                (Some((x1, y1)), Some((x2, y2)), Some((x3, y3))) => (x1, y1, x2, y2, x3, y3),
+                _ => continue,
+            };
+
+            // let (x1, y1) = to_screen_ortho(p1_cam, 1.0);
+            // let (x2, y2) = to_screen_ortho(p2_cam, 1.0);
+            // let (x3, y3) = to_screen_ortho(p3_cam, 1.0);
 
             draw_polygon_onto_buffer(
                 &vec![
