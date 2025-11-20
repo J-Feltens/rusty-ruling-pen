@@ -3,6 +3,7 @@ use crate::{
     vectors::{IntegerVector2d, Vector3d},
 };
 
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Triangle3d {
     pub p1: Vector3d,
     pub p2: Vector3d,

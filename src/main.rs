@@ -16,7 +16,7 @@ use crate::graphics::{
 };
 use crate::util::interpolate1d;
 use crate::vectors::ivec2d::Polygon2d;
-use crate::vectors::{IntegerVector2d, Matrix3d, Vector2d, Vector3d};
+use crate::vectors::{IntegerVector2d, Matrix3x3, Vector2d, Vector3d};
 
 pub mod graphics;
 pub mod util;
@@ -94,10 +94,16 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         triangle.p3 += cube_origin;
     }
 
-    fn to_screen_ortho(p_cam: Vector3d, zoom_fac: f64) -> (i32, i32) {
+    fn to_screen_ortho(p_cam: Vector3d, zoom_fac: f64) -> Option<(i32, i32)> {
+        // Cull points behind camera or on the plane
+        if p_cam.z >= 0.001 {
+            println!("Culling!!");
+            return None;
+        }
+
         let sx = (zoom_fac * p_cam.x + (SIZE_X as f64) / 2.0).round() as i32;
         let sy = ((SIZE_Y as f64) / 2.0 - zoom_fac * p_cam.y).round() as i32;
-        return (sx, sy);
+        return Some((sx, sy));
     }
 
     fn to_screen_perspective(p_cam: Vector3d, focal_length: f64) -> Option<(i32, i32)> {
@@ -137,17 +143,16 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         // get active keys
         let keys_down = window.get_keys();
         if keys_down.contains(&Key::W) {
-            let increment = cam_look_at.clone().normalize();
+            let increment = cam_look_at.clone().normalize() * 10.0;
             cam_pos.add(&(increment * -1.0));
-            cam_look_at.add(&(increment * -1.0));
         }
         if keys_down.contains(&Key::A) {
             let increment = cam_look_at.clone() * 10.0;
             cam_pos.add(&(increment.cross(z_up).normalize()));
         }
         if keys_down.contains(&Key::S) {
-            let increment = cam_look_at.clone() * 10.0;
-            cam_pos.add(&(increment.normalize()));
+            let increment = cam_look_at.clone().normalize() * 10.0;
+            cam_pos.add(&(increment));
         }
         if keys_down.contains(&Key::D) {
             let increment = cam_look_at.clone() * 10.0;
@@ -165,7 +170,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         let u = t.cross(w) / (t.cross(w)).length();
         let v = w.cross(u);
 
-        let camera_space_matrix = Matrix3d::from_vecs(u, v, w);
+        let camera_space_matrix = Matrix3x3::from_vecs(u, v, w);
 
         // finally, triangles
         for triangle in triangles.iter() {
@@ -177,14 +182,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let p2_perspective = to_screen_perspective(p2_cam, fov);
             let p3_perspective = to_screen_perspective(p3_cam, fov);
 
+            // let p1_perspective = to_screen_ortho(p1_cam, 1.0);
+            // let p2_perspective = to_screen_ortho(p2_cam, 1.0);
+            // let p3_perspective = to_screen_ortho(p3_cam, 1.0);
+
             let (x1, y1, x2, y2, x3, y3) = match (p1_perspective, p2_perspective, p3_perspective) {
                 (Some((x1, y1)), Some((x2, y2)), Some((x3, y3))) => (x1, y1, x2, y2, x3, y3),
                 _ => continue,
             };
-
-            // let (x1, y1) = to_screen_ortho(p1_cam, 1.0);
-            // let (x2, y2) = to_screen_ortho(p2_cam, 1.0);
-            // let (x3, y3) = to_screen_ortho(p3_cam, 1.0);
 
             draw_polygon_onto_buffer(
                 &vec![
