@@ -6,17 +6,29 @@
         {
             "label": "cargo run",
             "type": "shell",
-            "command": "~/.cargo/bin/cargo", // note: full path to the cargo
+            "command": "~/.cargo/bin/cargo",
             "args": [
-                "run",
-                // "--release",
-                // "--",
-                // "arg1"
+                "run"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "type": "cargo",
+            "command": "run",
+            "args": [
+                "--package",
+                "rusty-ruling-pen",
+                "--bin",
+                "rusty-ruling-pen"
+            ],
+            "env": { "RUST_BACKTRACE": "1" },
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "label": "rust: run rusty-ruling-pen"
         }
     ]
 }
