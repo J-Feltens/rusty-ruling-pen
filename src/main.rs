@@ -29,13 +29,13 @@ const SCALE: minifb::Scale = minifb::Scale::X1;
 const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(0);
 
 fn main() {
-    let m1 = Matrix4x4::test();
-    let v1 = Vector4d::test();
+    let m1 = Matrix3x3::test();
+    let v1 = Vector3d::test();
     let v2 = m1.times_vec(v1);
 
-    println!("v1:\n {}", v1);
-    println!("m1:\n {}", m1);
-    println!("v2:\n {}", v2);
+    println!("v1:\n{}", v1);
+    println!("m1:\n{}", m1);
+    println!("v2:\n{}", v2);
 }
 
 // fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {

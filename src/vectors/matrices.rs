@@ -64,11 +64,7 @@ impl Matrix3x3 {
     }
 
     pub fn times_vec(&self, vec: Vector3d) -> Vector3d {
-        return Vector3d::new(
-            (self.a * vec).sum(),
-            (self.b * vec).sum(),
-            (self.c * vec).sum(),
-        );
+        return Vector3d::new(self.a.dot(vec), self.b.dot(vec), self.c.dot(vec));
     }
 }
 
@@ -139,10 +135,10 @@ impl Matrix4x4 {
 
     pub fn times_vec(&self, vec: Vector4d) -> Vector4d {
         return Vector4d::new(
-            (self.a * vec).sum(),
-            (self.b * vec).sum(),
-            (self.c * vec).sum(),
-            (self.d * vec).sum(),
+            self.a.dot(vec),
+            self.b.dot(vec),
+            self.c.dot(vec),
+            self.d.dot(vec),
         );
     }
 }

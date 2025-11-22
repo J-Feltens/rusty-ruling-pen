@@ -68,6 +68,10 @@ impl Vector4d {
             u: self.u / len,
         }
     }
+
+    pub fn dot(&self, vec: Vector4d) -> f64 {
+        return (*self * vec).sum();
+    }
 }
 
 impl fmt::Display for Vector4d {

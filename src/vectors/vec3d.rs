@@ -55,6 +55,10 @@ impl Vector3d {
         return self.x + self.y + self.z;
     }
 
+    pub fn dot(&self, vec: Vector3d) -> f64 {
+        return (*self * vec).sum();
+    }
+
     pub fn cross(&self, v: Vector3d) -> Self {
         return Vector3d::new(
             self.y * v.z - self.z * v.y,
