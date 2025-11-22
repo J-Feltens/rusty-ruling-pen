@@ -1,6 +1,7 @@
+use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::vectors::{IntegerVector2d, Vector2d};
+use crate::vectors::{IntegerVector2d, Vector2d, Vector3d};
 
 /*
     3d implementation of Vector2d
@@ -14,17 +15,34 @@ pub struct Vector4d {
 }
 
 impl Vector4d {
-    pub fn new(x: f64, y: f64, z: f64, u: f64) -> Vector4d {
-        Vector4d { x, y, z, u }
+    pub fn new(x: f64, y: f64, z: f64, u: f64) -> Self {
+        Self { x, y, z, u }
     }
 
-    pub fn origin() -> Vector4d {
-        Vector4d {
+    pub fn from_vector3d(vector: Vector3d) -> Self {
+        return Self::new(vector.x, vector.y, vector.z, 0.0);
+    }
+
+    pub fn zero() -> Self {
+        Self {
             x: (0.0),
             y: (0.0),
             z: (0.0),
             u: (0.0),
         }
+    }
+
+    pub fn test() -> Self {
+        return Self::new(1.0, 2.0, 3.0, 4.0);
+    }
+
+    pub fn length(&self) -> f64 {
+        return ((self.x * self.x) + (self.y * self.y) + (self.z * self.z) + (self.u * self.u))
+            .sqrt();
+    }
+
+    pub fn sum(&self) -> f64 {
+        return self.x + self.y + self.z + self.u;
     }
 
     pub fn add(&mut self, v: &Vector4d) {
@@ -50,10 +68,12 @@ impl Vector4d {
             u: self.u / len,
         }
     }
+}
 
-    pub fn length(&self) -> f64 {
-        return ((self.x * self.x) + (self.y * self.y) + (self.z * self.z) + (self.u * self.u))
-            .sqrt();
+impl fmt::Display for Vector4d {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}, {}, {}, {}]", self.x, self.y, self.z, self.u)
     }
 }
 
@@ -61,7 +81,7 @@ impl Vector4d {
 impl Add for Vector4d {
     type Output = Vector4d;
 
-    fn add(self, rhs: Vector4d) -> Vector4d {
+    fn add(self, rhs: Vector4d) -> Self {
         Vector4d {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -85,7 +105,7 @@ impl AddAssign for Vector4d {
 impl Sub for Vector4d {
     type Output = Vector4d;
 
-    fn sub(self, rhs: Vector4d) -> Vector4d {
+    fn sub(self, rhs: Vector4d) -> Self {
         Vector4d {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -105,11 +125,35 @@ impl SubAssign for Vector4d {
     }
 }
 
+// v + scalar
+impl Add<f64> for Vector4d {
+    type Output = Vector4d;
+
+    fn add(self, rhs: f64) -> Self {
+        Vector4d {
+            x: self.x + rhs,
+            y: self.y + rhs,
+            z: self.z + rhs,
+            u: self.u + rhs,
+        }
+    }
+}
+
+// v += scalar
+impl AddAssign<f64> for Vector4d {
+    fn add_assign(&mut self, rhs: f64) {
+        self.x += rhs;
+        self.y += rhs;
+        self.z += rhs;
+        self.u += rhs;
+    }
+}
+
 // v * scalar
 impl Mul<f64> for Vector4d {
     type Output = Vector4d;
 
-    fn mul(self, rhs: f64) -> Vector4d {
+    fn mul(self, rhs: f64) -> Self {
         Vector4d {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -133,7 +177,7 @@ impl MulAssign<f64> for Vector4d {
 impl Div<f64> for Vector4d {
     type Output = Vector4d;
 
-    fn div(self, rhs: f64) -> Vector4d {
+    fn div(self, rhs: f64) -> Self {
         Vector4d {
             x: self.x / rhs,
             y: self.y / rhs,
@@ -157,7 +201,7 @@ impl DivAssign<f64> for Vector4d {
 impl Mul<Vector4d> for Vector4d {
     type Output = Vector4d;
 
-    fn mul(self, v: Vector4d) -> Vector4d {
+    fn mul(self, v: Vector4d) -> Self {
         Vector4d {
             x: self.x * v.x,
             y: self.y * v.y,

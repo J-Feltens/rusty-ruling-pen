@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 use crate::vectors::{IntegerVector2d, Vector2d};
@@ -13,16 +14,16 @@ pub struct Vector3d {
 }
 
 impl Vector3d {
-    pub fn new(x: f64, y: f64, z: f64) -> Vector3d {
-        Vector3d { x, y, z }
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
     }
 
-    pub fn origin() -> Vector3d {
-        Vector3d {
-            x: (0.0),
-            y: (0.0),
-            z: (0.0),
-        }
+    pub fn zero() -> Self {
+        Self::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn test() -> Self {
+        Self::new(1.0, 2.0, 3.0)
     }
 
     pub fn add(&mut self, v: &Vector3d) {
@@ -46,29 +47,15 @@ impl Vector3d {
         }
     }
 
-    pub fn rotate(&mut self, phi: f64) {
-        // let x: f64 = self.x * f64::cos(phi) - self.y * f64::sin(phi);
-        // let y: f64 = self.x * f64::sin(phi) + self.y * f64::cos(phi);
-
-        // self.x = x;
-        // self.y = y;
-    }
-
-    pub fn rotate_around_point(&mut self, phi: f64, center: Vector3d) {
-        // self.x -= center.x;
-        // self.y -= center.y;
-
-        // self.rotate(phi);
-
-        // self.x += center.x;
-        // self.y += center.y;
-    }
-
     pub fn length(&self) -> f64 {
         return ((self.x * self.x) + (self.y * self.y) + (self.z * self.z)).sqrt();
     }
 
-    pub fn cross(&self, v: Vector3d) -> Vector3d {
+    pub fn sum(&self) -> f64 {
+        return self.x + self.y + self.z;
+    }
+
+    pub fn cross(&self, v: Vector3d) -> Self {
         return Vector3d::new(
             self.y * v.z - self.z * v.y,
             self.z * v.x - self.x * v.z,
@@ -77,11 +64,18 @@ impl Vector3d {
     }
 }
 
+impl fmt::Display for Vector3d {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}, {}, {}]", self.x, self.y, self.z)
+    }
+}
+
 // v1 + v2
 impl Add for Vector3d {
     type Output = Vector3d;
 
-    fn add(self, rhs: Vector3d) -> Vector3d {
+    fn add(self, rhs: Vector3d) -> Self {
         Vector3d {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -103,7 +97,7 @@ impl AddAssign for Vector3d {
 impl Sub for Vector3d {
     type Output = Vector3d;
 
-    fn sub(self, rhs: Vector3d) -> Vector3d {
+    fn sub(self, rhs: Vector3d) -> Self {
         Vector3d {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -121,11 +115,33 @@ impl SubAssign for Vector3d {
     }
 }
 
+// v + scalar
+impl Add<f64> for Vector3d {
+    type Output = Vector3d;
+
+    fn add(self, rhs: f64) -> Self {
+        Vector3d {
+            x: self.x + rhs,
+            y: self.y + rhs,
+            z: self.z + rhs,
+        }
+    }
+}
+
+// v += scalar
+impl AddAssign<f64> for Vector3d {
+    fn add_assign(&mut self, rhs: f64) {
+        self.x += rhs;
+        self.y += rhs;
+        self.z += rhs;
+    }
+}
+
 // v * scalar
 impl Mul<f64> for Vector3d {
     type Output = Vector3d;
 
-    fn mul(self, rhs: f64) -> Vector3d {
+    fn mul(self, rhs: f64) -> Self {
         Vector3d {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -147,7 +163,7 @@ impl MulAssign<f64> for Vector3d {
 impl Div<f64> for Vector3d {
     type Output = Vector3d;
 
-    fn div(self, rhs: f64) -> Vector3d {
+    fn div(self, rhs: f64) -> Self {
         Vector3d {
             x: self.x / rhs,
             y: self.y / rhs,
@@ -169,7 +185,7 @@ impl DivAssign<f64> for Vector3d {
 impl Mul<Vector3d> for Vector3d {
     type Output = Vector3d;
 
-    fn mul(self, v: Vector3d) -> Vector3d {
+    fn mul(self, v: Vector3d) -> Self {
         Vector3d {
             x: self.x * v.x,
             y: self.y * v.y,

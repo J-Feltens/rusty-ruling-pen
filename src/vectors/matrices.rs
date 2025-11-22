@@ -1,72 +1,94 @@
 use crate::vectors::{Vector3d, Vector4d};
+use std::fmt;
+
+/*
+    This implementation of matrices uses vectors as underlying datastructure.
+    Hence, 3x3 matrix is represented by 3 Vector3d objects, where every vector represents a row:
+
+    Matrix3x3 = [
+        Vector3d_1.x, Vector3d_1.y, Vector3d_1.z,
+        Vector3d_2.x, Vector3d_2.y, Vector3d_2.z,
+        Vector3d_3.x, Vector3d_3.y, Vector3d_3.z,
+    ]
+*/
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Matrix3x3 {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
-    pub d: f64,
-    pub e: f64,
-    pub f: f64,
-    pub g: f64,
-    pub h: f64,
-    pub i: f64,
+    pub a: Vector3d,
+    pub b: Vector3d,
+    pub c: Vector3d,
 }
 
 impl Matrix3x3 {
-    pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64, g: f64, h: f64, i: f64) -> Self {
+    pub fn from_floats(
+        a: f64,
+        b: f64,
+        c: f64,
+        d: f64,
+        e: f64,
+        f: f64,
+        g: f64,
+        h: f64,
+        i: f64,
+    ) -> Self {
         Matrix3x3 {
-            a,
-            b,
-            c,
-            d,
-            e,
-            f,
-            g,
-            h,
-            i,
+            a: Vector3d::new(a, b, c),
+            b: Vector3d::new(d, e, f),
+            c: Vector3d::new(g, h, i),
         }
+    }
+
+    pub fn eye() -> Self {
+        Self::from_vecs(
+            Vector3d::new(1.0, 0.0, 0.0),
+            Vector3d::new(0.0, 1.0, 0.0),
+            Vector3d::new(0.0, 0.0, 1.0),
+        )
+    }
+
+    pub fn test() -> Self {
+        Self::from_vecs(
+            Vector3d::test(),
+            Vector3d::test() + 3.0,
+            Vector3d::test() + 6.0,
+        )
     }
 
     pub fn from_vecs(v1: Vector3d, v2: Vector3d, v3: Vector3d) -> Self {
         // vectors as rows
-        return Self::new(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+        return Self {
+            a: v1,
+            b: v2,
+            c: v3,
+        };
     }
 
     pub fn times_vec(&self, vec: Vector3d) -> Vector3d {
         return Vector3d::new(
-            self.a * vec.x + self.b * vec.y + self.c * vec.z,
-            self.d * vec.x + self.e * vec.y + self.f * vec.z,
-            self.g * vec.x + self.h * vec.y + self.i * vec.z,
+            (self.a * vec).sum(),
+            (self.b * vec).sum(),
+            (self.c * vec).sum(),
         );
+    }
+}
+
+impl fmt::Display for Matrix3x3 {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{},\n {},\n {}]", self.a, self.b, self.c)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Matrix4x4 {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
-    pub d: f64,
-
-    pub e: f64,
-    pub f: f64,
-    pub g: f64,
-    pub h: f64,
-
-    pub i: f64,
-    pub j: f64,
-    pub k: f64,
-    pub l: f64,
-
-    pub m: f64,
-    pub n: f64,
-    pub o: f64,
-    pub p: f64,
+    pub a: Vector4d,
+    pub b: Vector4d,
+    pub c: Vector4d,
+    pub d: Vector4d,
 }
 
 impl Matrix4x4 {
-    pub fn new(
+    pub fn from_floats(
         a: f64,
         b: f64,
         c: f64,
@@ -87,40 +109,47 @@ impl Matrix4x4 {
         o: f64,
         p: f64,
     ) -> Self {
-        Matrix4x4 {
-            a,
-            b,
-            c,
-            d,
-            e,
-            f,
-            g,
-            h,
-            i,
-            j,
-            k,
-            l,
-            m,
-            n,
-            o,
-            p,
+        Self {
+            a: Vector4d::new(a, b, c, d),
+            b: Vector4d::new(e, f, g, h),
+            c: Vector4d::new(i, j, k, l),
+            d: Vector4d::new(m, n, o, p),
         }
-    }
-
-    pub fn times_vec(&self, vec: Vector4d) -> Vector4d {
-        return Vector4d::new(
-            self.a * vec.x + self.b * vec.y + self.c * vec.z + self.d * vec.u,
-            self.e * vec.x + self.f * vec.y + self.g * vec.z + self.h * vec.u,
-            self.i * vec.x + self.j * vec.y + self.k * vec.z + self.l * vec.u,
-            self.m * vec.x + self.n * vec.y + self.o * vec.z + self.p * vec.z,
-        );
     }
 
     pub fn from_vecs(v1: Vector4d, v2: Vector4d, v3: Vector4d, v4: Vector4d) -> Self {
         // vectors as rows
-        return Self::new(
-            v1.x, v1.y, v1.z, v1.u, v2.x, v2.y, v2.z, v2.u, v3.x, v3.y, v3.z, v3.u, v4.x, v4.y,
-            v4.z, v4.u,
+        return Self {
+            a: v1,
+            b: v2,
+            c: v3,
+            d: v4,
+        };
+    }
+
+    pub fn test() -> Self {
+        // vectors as rows
+        return Self::from_vecs(
+            Vector4d::test(),
+            Vector4d::test() + 4.0,
+            Vector4d::test() + 8.0,
+            Vector4d::test() + 12.0,
         );
+    }
+
+    pub fn times_vec(&self, vec: Vector4d) -> Vector4d {
+        return Vector4d::new(
+            (self.a * vec).sum(),
+            (self.b * vec).sum(),
+            (self.c * vec).sum(),
+            (self.d * vec).sum(),
+        );
+    }
+}
+
+impl fmt::Display for Matrix4x4 {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{},\n {},\n {},\n {}]", self.a, self.b, self.c, self.d)
     }
 }
