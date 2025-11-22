@@ -19,8 +19,8 @@ impl Vector4d {
         Self { x, y, z, u }
     }
 
-    pub fn from_vector3d(vector: Vector3d) -> Self {
-        return Self::new(vector.x, vector.y, vector.z, 0.0);
+    pub fn from_vector3d(vector: Vector3d, u: f64) -> Self {
+        return Self::new(vector.x, vector.y, vector.z, u);
     }
 
     pub fn zero() -> Self {

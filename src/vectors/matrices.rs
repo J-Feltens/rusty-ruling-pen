@@ -66,6 +66,13 @@ impl Matrix3x3 {
     pub fn times_vec(&self, vec: Vector3d) -> Vector3d {
         return Vector3d::new(self.a.dot(vec), self.b.dot(vec), self.c.dot(vec));
     }
+
+    pub fn transpose(&self) -> Self {
+        return Self::from_floats(
+            self.a.x, self.b.x, self.c.x, self.a.y, self.b.y, self.c.y, self.a.z, self.b.z,
+            self.c.z,
+        );
+    }
 }
 
 impl fmt::Display for Matrix3x3 {
@@ -123,6 +130,15 @@ impl Matrix4x4 {
         };
     }
 
+    pub fn eye() -> Self {
+        Self::from_vecs(
+            Vector4d::new(1.0, 0.0, 0.0, 0.0),
+            Vector4d::new(0.0, 1.0, 0.0, 0.0),
+            Vector4d::new(0.0, 0.0, 1.0, 0.0),
+            Vector4d::new(0.0, 0.0, 0.0, 1.0),
+        )
+    }
+
     pub fn test() -> Self {
         // vectors as rows
         return Self::from_vecs(
@@ -139,6 +155,13 @@ impl Matrix4x4 {
             self.b.dot(vec),
             self.c.dot(vec),
             self.d.dot(vec),
+        );
+    }
+
+    pub fn transpose(&self) -> Self {
+        return Self::from_floats(
+            self.a.x, self.b.x, self.c.x, self.d.x, self.a.y, self.b.y, self.c.y, self.d.y,
+            self.a.z, self.b.z, self.c.z, self.d.z, self.a.u, self.b.u, self.c.u, self.d.u,
         );
     }
 }
