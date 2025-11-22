@@ -66,6 +66,10 @@ impl Vector3d {
             self.x * v.y - self.y * v.x,
         );
     }
+
+    pub fn truncate_to_2d(&self) -> Vector2d {
+        return Vector2d::new(self.x, self.y);
+    }
 }
 
 impl fmt::Display for Vector3d {

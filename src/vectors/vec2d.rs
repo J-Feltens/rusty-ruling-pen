@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /*
@@ -48,6 +49,13 @@ impl Vector2d {
 
     pub fn length(&self) -> f64 {
         return ((self.x * self.x) + (self.y * self.y)).sqrt();
+    }
+}
+
+impl fmt::Display for Vector2d {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}, {}]", self.x, self.y)
     }
 }
 

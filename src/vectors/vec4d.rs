@@ -72,6 +72,14 @@ impl Vector4d {
     pub fn dot(&self, vec: Vector4d) -> f64 {
         return (*self * vec).sum();
     }
+
+    pub fn truncate_to_3d(&self) -> Vector3d {
+        return Vector3d::new(self.x, self.y, self.z);
+    }
+
+    pub fn truncate_to_2d(&self) -> Vector2d {
+        return Vector2d::new(self.x, self.y);
+    }
 }
 
 impl fmt::Display for Vector4d {
