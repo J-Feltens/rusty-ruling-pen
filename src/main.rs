@@ -25,208 +25,287 @@ pub mod vectors;
 
 const SIZE_X: usize = 512;
 const SIZE_Y: usize = 512;
+const SIZE_X_HALF: usize = SIZE_X / 2;
+const SIZE_Y_HALF: usize = SIZE_Y / 2;
+const PI: f64 = 3.141;
+
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(0);
 
-fn main() {
-    let m1 = Matrix4x4::test();
-    let m2 = m1.transpose();
+// fn main() {
+//     let m1 = Matrix4x4::test();
+//     let m2 = m1.transpose();
 
-    println!("{}", m1);
-    println!("{}", m2);
-}
-
-// fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
-//     let mut global_timer = Instant::now();
-
-//     let mut window = Window::new(
-//         "RRP (Rusty Ruling Pen)",
-//         SIZE_X,
-//         SIZE_Y,
-//         WindowOptions {
-//             borderless: false,
-//             title: true,
-//             scale: SCALE,
-//             resize: false,
-//             scale_mode: minifb::ScaleMode::UpperLeft,
-//             topmost: true,
-//             transparency: false,
-//             none: false,
-//         },
-//     )?;
-
-//     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
-
-//     let red = Color::new(1.0, 0.0, 0.0, 0.6);
-//     let green = Color::new(0.0, 1.0, 0.0, 0.6);
-//     let blue = Color::new(0.0, 0.0, 1.0, 0.6);
-//     let cyan = Color::new(1.0, 0.0, 1.0, 0.6);
-//     let yellow = Color::new(1.0, 1.0, 0.0, 0.6);
-//     let magenta = Color::new(0.0, 1.0, 1.0, 0.6);
-
-//     // cube
-//     let cube_origin = Vector3d::zero();
-//     let cube_size = 2.0;
-//     // vertices
-//     let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-//     let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-//     let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
-//     let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
-
-//     let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-//     let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-//     let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
-//     let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
-
-//     // faces
-//     let mut triangles = vec![
-//         // floor
-//         Triangle3d::new(v1, v2, v3, red),
-//         Triangle3d::new(v1, v3, v4, red),
-//         // lid
-//         Triangle3d::new(v5, v6, v7, blue),
-//         Triangle3d::new(v5, v7, v8, blue),
-//         // sides
-//         Triangle3d::new(v1, v2, v6, green),
-//         Triangle3d::new(v1, v5, v6, green),
-//         Triangle3d::new(v2, v3, v7, cyan),
-//         Triangle3d::new(v2, v6, v7, cyan),
-//         Triangle3d::new(v3, v4, v8, yellow),
-//         Triangle3d::new(v3, v7, v8, yellow),
-//         Triangle3d::new(v4, v1, v5, magenta),
-//         Triangle3d::new(v4, v8, v5, magenta),
-//     ];
-
-//     for triangle in triangles.iter_mut() {
-//         triangle.p1 += cube_origin;
-//         triangle.p2 += cube_origin;
-//         triangle.p3 += cube_origin;
-//     }
-
-//     let mut cam_pos = Vector3d::new(0.3, 1.0, 0.2) * 2.0;
-//     let mut cam_look_at = Vector3d::new(0.0, 0.0, 0.0);
-//     let z_up = Vector3d::new(0.0, 0.0, 1.0); // camera up
-//     let mut fov = 120.0;
-
-//     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
-//         // render loop
-//         canvas.reset();
-//         canvas.checker(
-//             &WHITE,
-//             &Color {
-//                 r: (0.0),
-//                 g: (0.0),
-//                 b: (0.0),
-//                 a: (0.1),
-//             },
-//         );
-
-//         // get active keys
-//         // let keys_down = window.get_keys();
-//         // if keys_down.contains(&Key::W) {
-//         //     let increment = cam_look_at.clone().normalize() * 10.0;
-//         //     cam_pos.add(&(increment * -1.0));
-//         // }
-//         // if keys_down.contains(&Key::A) {
-//         //     let increment = cam_look_at.clone() * 10.0;
-//         //     cam_pos.add(&(increment.cross(z_up).normalize()));
-//         // }
-//         // if keys_down.contains(&Key::S) {
-//         //     let increment = cam_look_at.clone().normalize() * 10.0;
-//         //     cam_pos.add(&(increment));
-//         // }
-//         // if keys_down.contains(&Key::D) {
-//         //     let increment = cam_look_at.clone() * 10.0;
-//         //     cam_pos.add(&(increment.cross(z_up).normalize() * -1.0));
-//         // }
-
-//         // camera space stuff
-//         let e = cam_pos;
-//         let a = cam_look_at;
-//         let t = z_up;
-//         let g = a - e;
-
-//         // camera space spanning vectors
-//         let w = (g * -1.0) / g.length();
-//         let u = t.cross(w) / (t.cross(w)).length();
-//         let v = w.cross(u);
-
-//         let u_extended = Vector4d::from_vector3d(u, )
-
-//         // projection stuff
-//         let l = -100.0;
-//         let r = 100.0;
-//         let b = -100.0;
-//         let t = 100.0;
-//         let n = 1.0;
-//         let f = 1_000.0;
-
-//         let camera_space_matrix = Matrix3x3::from_vecs(u, v, w);
-//         let ortho_projection_matrix = Matrix4x4::from_vecs(
-//             Vector4d::new(2.0 / (r - l), 0.0, 0.0, -(r + l) / (r - l)),
-//             Vector4d::new(0.0, 2.0 / (t - b), 0.0, -(t + b) / (t - b)),
-//             Vector4d::new(0.0, 0.0, 1.0 / (n - f), -n / (f - n)),
-//             Vector4d::new(0.0, 0.0, 0.0, 1.0),
-//         );
-
-//         // finally, triangles
-//         for triangle in triangles.iter() {
-//             let p1_cam = camera_space_matrix.times_vec(triangle.p1 - e);
-//             let p2_cam = camera_space_matrix.times_vec(triangle.p2 - e);
-//             let p3_cam = camera_space_matrix.times_vec(triangle.p3 - e);
-
-//             let p1_cam_homo = Vector4d::from_vector3d(p1_cam);
-//             let p2_cam_homo = Vector4d::from_vector3d(p2_cam);
-//             let p3_cam_homo = Vector4d::from_vector3d(p3_cam);
-
-//             let p1_projected = ortho_projection_matrix.times_vec(p1_cam_homo);
-//             let p2_projected = ortho_projection_matrix.times_vec(p2_cam_homo);
-//             let p3_projected = ortho_projection_matrix.times_vec(p3_cam_homo);
-
-//             let mut p1_2d = Vector2d::new(p1_projected.x, p1_projected.y);
-//             let mut p2_2d = Vector2d::new(p2_projected.x, p2_projected.y);
-//             let mut p3_2d = Vector2d::new(p3_projected.x, p3_projected.y);
-
-//             let offset = Vector2d::new(SIZE_X as f64 / 2.0, SIZE_Y as f64 / 2.0);
-
-//             p1_2d *= offset / 2.0;
-//             p2_2d *= offset / 2.0;
-//             p3_2d *= offset / 2.0;
-
-//             p1_2d += offset;
-//             p2_2d += offset;
-//             p3_2d += offset;
-
-//             draw_polygon_onto_buffer(
-//                 &vec![
-//                     IntegerVector2d::new(
-//                         p1_2d.x as i32,
-//                         p1_2d.y as i32,
-//                         triangle.color.as_f64_vec(),
-//                     ),
-//                     IntegerVector2d::new(
-//                         p2_2d.x as i32,
-//                         p2_2d.y as i32,
-//                         triangle.color.as_f64_vec(),
-//                     ),
-//                     IntegerVector2d::new(
-//                         p3_2d.x as i32,
-//                         p3_2d.y as i32,
-//                         triangle.color.as_f64_vec(),
-//                     ),
-//                 ],
-//                 &mut canvas,
-//                 false,
-//             );
-//         }
-
-//         // update minifb with new buffer
-//         window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
-
-//         println!("Rendertime: {} ms", global_timer.elapsed().as_millis());
-//         global_timer = Instant::now();
-//         thread::sleep(ANIM_INTERVAL);
-//     }
-
-//     Ok(())
+//     println!("{}", m1);
+//     println!("{}", m2);
 // }
+
+fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    let mut global_timer = Instant::now();
+
+    let mut window = Window::new(
+        "RRP (Rusty Ruling Pen)",
+        SIZE_X,
+        SIZE_Y,
+        WindowOptions {
+            borderless: false,
+            title: true,
+            scale: SCALE,
+            resize: false,
+            scale_mode: minifb::ScaleMode::UpperLeft,
+            topmost: true,
+            transparency: false,
+            none: false,
+        },
+    )?;
+
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
+
+    let red = Color::new(1.0, 0.0, 0.0, 0.6);
+    let green = Color::new(0.0, 1.0, 0.0, 0.6);
+    let blue = Color::new(0.0, 0.0, 1.0, 0.6);
+    let cyan = Color::new(1.0, 0.0, 1.0, 0.6);
+    let yellow = Color::new(1.0, 1.0, 0.0, 0.6);
+    let magenta = Color::new(0.0, 1.0, 1.0, 0.6);
+
+    // cube
+    let cube_origin = Vector3d::new(0.0, 0.0, 1.0);
+    let cube_size = 1.0;
+    // vertices
+    let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
+    let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
+    let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
+    let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
+
+    let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
+    let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
+    let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
+    let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
+
+    // faces
+    let mut triangles = vec![
+        // floor
+        Triangle3d::new(v1, v2, v3, red),
+        Triangle3d::new(v1, v3, v4, red),
+        // lid
+        Triangle3d::new(v5, v6, v7, blue),
+        Triangle3d::new(v5, v7, v8, blue),
+        // sides
+        Triangle3d::new(v1, v2, v6, green),
+        Triangle3d::new(v1, v5, v6, green),
+        Triangle3d::new(v2, v3, v7, cyan),
+        Triangle3d::new(v2, v6, v7, cyan),
+        Triangle3d::new(v3, v4, v8, yellow),
+        Triangle3d::new(v3, v7, v8, yellow),
+        Triangle3d::new(v4, v1, v5, magenta),
+        Triangle3d::new(v4, v8, v5, magenta),
+    ];
+
+    for triangle in triangles.iter_mut() {
+        triangle.p1 += cube_origin;
+        triangle.p2 += cube_origin;
+        triangle.p3 += cube_origin;
+    }
+
+    let tile_size = 0.2;
+    for y_ in -100..100 {
+        for x_ in -100..100 {
+            let (x, y) = (x_ as f64 * tile_size, y_ as f64 * tile_size);
+            let c1 = Vector3d::new(x, y, 0.0);
+            let c2 = Vector3d::new(x + tile_size, y, 0.0);
+            let c3 = Vector3d::new(x + tile_size, y + tile_size, 0.0);
+            let c4 = Vector3d::new(x, y + tile_size, 0.0);
+            triangles.push(Triangle3d::new(c1, c2, c3, red));
+            triangles.push(Triangle3d::new(c1, c3, c4, green));
+        }
+    }
+
+    // camera space stuff
+    let world_up = Vector3d::new(0.0, 0.0, 1.0);
+    let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
+    let mut a = cube_origin.clone(); // look at
+    let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
+    let mut g = a - e;
+
+    // camera space spanning vectors
+    let mut w = (g * -1.0) / g.length();
+    let mut u = t.cross(w).normalize();
+    let mut v = w.cross(u);
+
+    while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
+        // render loop
+        canvas.reset();
+        canvas.checker(
+            &WHITE,
+            &Color {
+                r: (0.0),
+                g: (0.0),
+                b: (0.0),
+                a: (0.1),
+            },
+        );
+
+        // get active keys
+        let camera_speed = 0.05;
+        let keys_down = window.get_keys();
+        let mut directional_increment = Vector3d::zero();
+
+        // wasd movement
+        if keys_down.contains(&Key::W) {
+            directional_increment += w * -5.0;
+        }
+        if keys_down.contains(&Key::A) {
+            directional_increment += u * -1.0;
+        }
+        if keys_down.contains(&Key::S) {
+            directional_increment += w * 5.0;
+        }
+        if keys_down.contains(&Key::D) {
+            directional_increment += u * 1.0;
+        }
+        if keys_down.contains(&Key::Q) {
+            directional_increment += v * -1.0;
+        }
+        if keys_down.contains(&Key::E) {
+            directional_increment += v * 1.0;
+        }
+        if keys_down.contains(&Key::Up) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(u, PI / 512.0);
+            w = rot_mat.times_vec(w).normalize();
+            v = rot_mat.times_vec(v).normalize();
+        }
+        if keys_down.contains(&Key::Down) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(u, -PI / 512.0);
+            w = rot_mat.times_vec(w);
+            v = rot_mat.times_vec(v);
+        }
+        if keys_down.contains(&Key::Left) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up, PI / 512.0);
+            w = rot_mat.times_vec(w).normalize();
+            u = rot_mat.times_vec(u).normalize();
+        }
+        if keys_down.contains(&Key::Right) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up, -PI / 512.0);
+            w = rot_mat.times_vec(w).normalize();
+            u = rot_mat.times_vec(u).normalize();
+        }
+
+        // arrow keys camera rotation
+        if keys_down.contains(&Key::Up) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(u.normalize(), PI / 512.0);
+            w = rot_mat.times_vec(w);
+            v = rot_mat.times_vec(v);
+        }
+        if keys_down.contains(&Key::Down) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(u.normalize(), -PI / 512.0);
+            w = rot_mat.times_vec(w);
+            v = rot_mat.times_vec(v);
+        }
+        if keys_down.contains(&Key::Left) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up.normalize(), PI / 64.0);
+            w = rot_mat.times_vec(w);
+            u = rot_mat.times_vec(u);
+        }
+        if keys_down.contains(&Key::Right) {
+            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up.normalize(), -PI / 64.0);
+            w = rot_mat.times_vec(w);
+            u = rot_mat.times_vec(u);
+        }
+
+        // rebuild uvw to orthonormal base
+        w = w.normalize(); // forward
+        u = world_up.cross(w).normalize();
+        v = w.cross(u);
+
+        directional_increment.z = 0.0;
+        e += directional_increment * camera_speed;
+        a += directional_increment * camera_speed;
+
+        g = a - e;
+
+        let u_extended = Vector4d::from_vector3d(&u, -u.dot(e));
+        let v_extended = Vector4d::from_vector3d(&v, -v.dot(e));
+        let w_extended = Vector4d::from_vector3d(&w, -w.dot(e));
+        let camera_matrix = Matrix4x4::from_vecs(
+            u_extended,
+            v_extended,
+            w_extended,
+            Vector4d::new(0.0, 0.0, 0.0, 1.0),
+        );
+
+        // projection stuff
+        let l = -2.0;
+        let r = 2.0;
+        let b = -2.0;
+        let t = 2.0;
+        let n = 1.0;
+        let f = 10.0;
+
+        let ortho_projection_matrix = Matrix4x4::from_vecs(
+            Vector4d::new(2.0 / (r - l), 0.0, 0.0, -(r + l) / (r - l)),
+            Vector4d::new(0.0, 2.0 / (t - b), 0.0, -(t + b) / (t - b)),
+            Vector4d::new(0.0, 0.0, 1.0 / (n - f), -n / (f - n)),
+            Vector4d::new(0.0, 0.0, 0.0, 1.0),
+        );
+
+        let perspective_projection_matrix = Matrix4x4::from_vecs(
+            Vector4d::new((2.0 * n) / (r - l), 0.0, (l + r) / (r - l), 0.0),
+            Vector4d::new(0.0, (2.0 * n) / (t - b), (b + t) / (t - b), 0.0),
+            Vector4d::new(0.0, 0.0, -(n) / (f - n), -(f * n) / (f - n)),
+            Vector4d::new(0.0, 0.0, -(n) / (f - n), -(f * n) / (f - n)),
+        );
+
+        // finally, triangles
+        for triangle in triangles.iter() {
+            let mut skip_triangle = false;
+            let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
+            for (i, vertex) in vec![triangle.p1, triangle.p2, triangle.p3]
+                .iter()
+                .enumerate()
+            {
+                let mut vec4 = Vector4d::from_vector3d(vertex, 1.0);
+                vec4 = camera_matrix.times_vec(vec4);
+                vec4 = perspective_projection_matrix.times_vec(vec4);
+
+                // perspective divide by z
+                let vec3 = vec4.truncate_to_3d() / vec4.u;
+
+                if vec3.x < -1.0 || vec3.x > 1.0 || vec3.y < -1.0 || vec3.y > 1.0 {
+                    skip_triangle = true;
+                }
+
+                let ivec2 = IntegerVector2d::new(
+                    (vec3.x * SIZE_X_HALF as f64) as i32 + SIZE_X_HALF as i32,
+                    (vec3.y * SIZE_Y_HALF as f64) as i32 + SIZE_Y_HALF as i32,
+                    triangle.color.as_f64_vec(),
+                );
+                triangle_projected[i] = ivec2;
+            }
+
+            if skip_triangle {
+                continue;
+            }
+            draw_polygon_onto_buffer(&triangle_projected, &mut canvas, false);
+        }
+
+        // update minifb with new buffer
+        window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
+
+        // print statistics:
+        let T = global_timer.elapsed().as_millis();
+        println!("Rendertime: {} ms ({} fps)", T, 1.0 / (T as f64 / 1000.0));
+
+        println!(
+            "   {0: <20} {1: <4}, {2: <4}, {3: <4}",
+            "Camera Position:", e.x, e.y, e.z
+        );
+        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "u:", u.x, u.y, u.z);
+        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "v:", v.x, v.y, v.z);
+        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "w:", w.x, w.y, w.z);
+        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "g:", g.x, g.y, g.z);
+        global_timer = Instant::now();
+        thread::sleep(ANIM_INTERVAL);
+    }
+
+    Ok(())
+}

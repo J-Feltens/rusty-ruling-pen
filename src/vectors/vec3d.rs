@@ -39,11 +39,16 @@ impl Vector3d {
     }
 
     pub fn normalize(&self) -> Self {
-        let len = self.length();
-        Self {
-            x: self.x / len,
-            y: self.y / len,
-            z: self.z / len,
+        let len = self.length().abs();
+        if len == 0.0 {
+            panic!("Trying to normalize a vector with length zero!!");
+            return Self::zero();
+        } else {
+            return Self {
+                x: self.x / len,
+                y: self.y / len,
+                z: self.z / len,
+            };
         }
     }
 

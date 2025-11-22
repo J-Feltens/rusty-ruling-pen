@@ -1,4 +1,5 @@
 use std::{
+    fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
     vec,
 };
@@ -40,7 +41,7 @@ impl IntegerVector2d {
         }
     }
 
-    pub fn origin() -> IntegerVector2d {
+    pub fn zero() -> IntegerVector2d {
         IntegerVector2d {
             x: (0),
             y: (0),
@@ -63,6 +64,13 @@ impl IntegerVector2d {
     }
 }
 
+impl fmt::Display for IntegerVector2d {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}, {}]", self.x, self.y)
+    }
+}
+
 /*
     A simple struct to store a polygon consisting of n IntegerVector2ds
 */
@@ -75,5 +83,4 @@ impl Polygon2d {
     pub fn new(vertices: Vec<IntegerVector2d>) -> Polygon2d {
         Polygon2d { vertices }
     }
-    
 }

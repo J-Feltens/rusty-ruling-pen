@@ -63,6 +63,30 @@ impl Matrix3x3 {
         };
     }
 
+    pub fn calc_rotation_matrix(pivot_vec: Vector3d, theta: f64) -> Self {
+        let u = pivot_vec;
+        let cos_theta = theta.cos();
+        let sin_theta = theta.sin();
+        let one_minus_cos_theta = 1.0 - theta.cos();
+        Self::from_vecs(
+            Vector3d::new(
+                u.x * u.x * one_minus_cos_theta + cos_theta,
+                u.x * u.y * one_minus_cos_theta - u.z * sin_theta,
+                u.x * u.z * one_minus_cos_theta + u.y * sin_theta,
+            ),
+            Vector3d::new(
+                u.x * u.y * one_minus_cos_theta * u.z * sin_theta,
+                u.y * u.y * one_minus_cos_theta + cos_theta,
+                u.y * u.z * one_minus_cos_theta - u.x * sin_theta,
+            ),
+            Vector3d::new(
+                u.x * u.y * one_minus_cos_theta - u.y * sin_theta,
+                u.x * u.x * one_minus_cos_theta + u.x * sin_theta,
+                u.z * u.z * one_minus_cos_theta + cos_theta,
+            ),
+        )
+    }
+
     pub fn times_vec(&self, vec: Vector3d) -> Vector3d {
         return Vector3d::new(self.a.dot(vec), self.b.dot(vec), self.c.dot(vec));
     }
