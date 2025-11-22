@@ -61,12 +61,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
-    let red = Color::new(1.0, 0.0, 0.0, 0.6);
-    let green = Color::new(0.0, 1.0, 0.0, 0.6);
-    let blue = Color::new(0.0, 0.0, 1.0, 0.6);
-    let cyan = Color::new(1.0, 0.0, 1.0, 0.6);
-    let yellow = Color::new(1.0, 1.0, 0.0, 0.6);
-    let magenta = Color::new(0.0, 1.0, 1.0, 0.6);
+    let red = Color::new(1.0, 0.0, 0.0, 1.0);
+    let green = Color::new(0.0, 1.0, 0.0, 1.0);
+    let blue = Color::new(0.0, 0.0, 1.0, 1.0);
+    let cyan = Color::new(1.0, 0.0, 1.0, 1.0);
+    let yellow = Color::new(1.0, 1.0, 0.0, 1.0);
+    let magenta = Color::new(0.0, 1.0, 1.0, 1.0);
 
     // cube
     let cube_origin = Vector3d::new(0.0, 0.0, 1.0);
@@ -107,30 +107,25 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         triangle.p3 += cube_origin;
     }
 
-    let tile_size = 0.2;
-    for y_ in -100..100 {
-        for x_ in -100..100 {
-            let (x, y) = (x_ as f64 * tile_size, y_ as f64 * tile_size);
-            let c1 = Vector3d::new(x, y, 0.0);
-            let c2 = Vector3d::new(x + tile_size, y, 0.0);
-            let c3 = Vector3d::new(x + tile_size, y + tile_size, 0.0);
-            let c4 = Vector3d::new(x, y + tile_size, 0.0);
-            triangles.push(Triangle3d::new(c1, c2, c3, red));
-            triangles.push(Triangle3d::new(c1, c3, c4, green));
-        }
-    }
+    // let tile_size = 0.2;
+    // for y_ in -100..100 {
+    //     for x_ in -100..100 {
+    //         let (x, y) = (x_ as f64 * tile_size, y_ as f64 * tile_size);
+    //         let c1 = Vector3d::new(x, y, 0.0);
+    //         let c2 = Vector3d::new(x + tile_size, y, 0.0);
+    //         let c3 = Vector3d::new(x + tile_size, y + tile_size, 0.0);
+    //         let c4 = Vector3d::new(x, y + tile_size, 0.0);
+    //         triangles.push(Triangle3d::new(c1, c2, c3, red));
+    //         triangles.push(Triangle3d::new(c1, c3, c4, green));
+    //     }
+    // }
 
-    // camera space stuff
-    let world_up = Vector3d::new(0.0, 0.0, 1.0);
-    let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
-    let mut a = cube_origin.clone(); // look at
-    let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
-    let mut g = a - e;
-
-    // camera space spanning vectors
-    let mut w = (g * -1.0) / g.length();
-    let mut u = t.cross(w).normalize();
-    let mut v = w.cross(u);
+    // spherical coords for simple camera movement
+    let gimbal_radius: f64 = 15.0;
+    let angle_increment: f64 = 0.03;
+    let mut camera_phi: f64 = 0.0;
+    let mut camera_theta: f64 = PI / 2.0;
+    let mut e = Vector3d::new(gimbal_radius, 0.0, 0.0) * 2.0; // cam pos
 
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         // render loop
@@ -146,82 +141,49 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         );
 
         // get active keys
-        let camera_speed = 0.05;
         let keys_down = window.get_keys();
-        let mut directional_increment = Vector3d::zero();
 
-        // wasd movement
+        // wasd camera gimbal-like movement using spherical coords
+        let mut increment_phi = 0.0;
+        let mut increment_theta = 0.0;
         if keys_down.contains(&Key::W) {
-            directional_increment += w * -5.0;
+            increment_theta -= angle_increment;
         }
         if keys_down.contains(&Key::A) {
-            directional_increment += u * -1.0;
+            increment_phi -= angle_increment;
         }
         if keys_down.contains(&Key::S) {
-            directional_increment += w * 5.0;
+            increment_theta += angle_increment;
         }
         if keys_down.contains(&Key::D) {
-            directional_increment += u * 1.0;
+            increment_phi += angle_increment;
         }
-        if keys_down.contains(&Key::Q) {
-            directional_increment += v * -1.0;
+        // increment camera angles
+        camera_theta += increment_theta;
+        // clamp phi
+        camera_phi += increment_phi;
+        if camera_theta > PI {
+            camera_theta = PI;
+        } else if camera_theta <= 0.0 {
+            camera_theta = 0.0000001;
         }
-        if keys_down.contains(&Key::E) {
-            directional_increment += v * 1.0;
-        }
-        if keys_down.contains(&Key::Up) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(u, PI / 512.0);
-            w = rot_mat.times_vec(w).normalize();
-            v = rot_mat.times_vec(v).normalize();
-        }
-        if keys_down.contains(&Key::Down) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(u, -PI / 512.0);
-            w = rot_mat.times_vec(w);
-            v = rot_mat.times_vec(v);
-        }
-        if keys_down.contains(&Key::Left) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up, PI / 512.0);
-            w = rot_mat.times_vec(w).normalize();
-            u = rot_mat.times_vec(u).normalize();
-        }
-        if keys_down.contains(&Key::Right) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up, -PI / 512.0);
-            w = rot_mat.times_vec(w).normalize();
-            u = rot_mat.times_vec(u).normalize();
-        }
+        // set camera pos (eye)
+        e = Vector3d::new(
+            gimbal_radius * camera_theta.sin() * camera_phi.cos(),
+            gimbal_radius * camera_theta.sin() * camera_phi.sin(),
+            gimbal_radius * camera_theta.cos(),
+        );
 
-        // arrow keys camera rotation
-        if keys_down.contains(&Key::Up) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(u.normalize(), PI / 512.0);
-            w = rot_mat.times_vec(w);
-            v = rot_mat.times_vec(v);
-        }
-        if keys_down.contains(&Key::Down) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(u.normalize(), -PI / 512.0);
-            w = rot_mat.times_vec(w);
-            v = rot_mat.times_vec(v);
-        }
-        if keys_down.contains(&Key::Left) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up.normalize(), PI / 64.0);
-            w = rot_mat.times_vec(w);
-            u = rot_mat.times_vec(u);
-        }
-        if keys_down.contains(&Key::Right) {
-            let rot_mat = Matrix3x3::calc_rotation_matrix(world_up.normalize(), -PI / 64.0);
-            w = rot_mat.times_vec(w);
-            u = rot_mat.times_vec(u);
-        }
+        // camera space stuff
+        // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
+        let a = cube_origin.clone(); // look at
+        let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
+        let g = a - e;
 
-        // rebuild uvw to orthonormal base
-        w = w.normalize(); // forward
-        u = world_up.cross(w).normalize();
-        v = w.cross(u);
-
-        directional_increment.z = 0.0;
-        e += directional_increment * camera_speed;
-        a += directional_increment * camera_speed;
-
-        g = a - e;
+        // camera space spanning vectors
+        let w = g.normalize() * -1.0;
+        let u = t.cross(w).normalize();
+        let v = w.cross(u);
 
         let u_extended = Vector4d::from_vector3d(&u, -u.dot(e));
         let v_extended = Vector4d::from_vector3d(&v, -v.dot(e));
@@ -282,6 +244,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                 triangle_projected[i] = ivec2;
             }
 
+            //cull triangles that is even partially out if bounds
             if skip_triangle {
                 continue;
             }
@@ -296,13 +259,25 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         println!("Rendertime: {} ms ({} fps)", T, 1.0 / (T as f64 / 1000.0));
 
         println!(
-            "   {0: <20} {1: <4}, {2: <4}, {3: <4}",
-            "Camera Position:", e.x, e.y, e.z
+            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "Camera Position", e.x, e.y, e.z
         );
-        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "u:", u.x, u.y, u.z);
-        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "v:", v.x, v.y, v.z);
-        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "w:", w.x, w.y, w.z);
-        println!("   {0: <20} {1: <4}, {2: <4}, {3: <4}", "g:", g.x, g.y, g.z);
+        println!(
+            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "u:", u.x, u.y, u.z
+        );
+        println!(
+            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "v:", v.x, v.y, v.z
+        );
+        println!(
+            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "w:", w.x, w.y, w.z
+        );
+        println!(
+            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "g:", g.x, g.y, g.z
+        );
         global_timer = Instant::now();
         thread::sleep(ANIM_INTERVAL);
     }
