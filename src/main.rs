@@ -1,23 +1,14 @@
-use std::arch::global_asm;
 use std::time::Instant;
 
-use image::imageops::FilterType::Triangle;
-use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions};
 
 use std::{thread, time};
 
-use crate::graphics::colors::rgb2u32;
-use crate::graphics::scanline::{
-    ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTableEntry, draw_polygon_onto_buffer,
-};
-use crate::graphics::{
-    BLACK, BLUE, CYAN, Canvas, Color, EdgeTable, GREEN, MAGENTA, RED, Triangle3d, WHITE, YELLOW,
-    triangles,
-};
-use crate::util::interpolate1d;
-use crate::vectors::ivec2d::Polygon2d;
+use crate::graphics::Cube;
+use crate::graphics::scanline::draw_polygon_onto_buffer;
+use crate::graphics::{Canvas, WHITE};
 use crate::vectors::matrices::Matrix4x4;
-use crate::vectors::{IntegerVector2d, Matrix3x3, Vector2d, Vector3d, Vector4d};
+use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 
 pub mod graphics;
 pub mod util;
@@ -61,51 +52,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
-    let red = Color::new(1.0, 0.0, 0.0, 1.0);
-    let green = Color::new(0.0, 1.0, 0.0, 1.0);
-    let blue = Color::new(0.0, 0.0, 1.0, 1.0);
-    let cyan = Color::new(1.0, 0.0, 1.0, 1.0);
-    let yellow = Color::new(1.0, 1.0, 0.0, 1.0);
-    let magenta = Color::new(0.0, 1.0, 1.0, 1.0);
+    // cube s
 
-    // cube
-    let cube_origin = Vector3d::new(0.0, 0.0, 1.0);
-    let cube_size = 1.0;
-    // vertices
-    let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-    let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-    let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
-    let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
+    let cube = Cube::new(1.2, Vector3d::zero());
+    let cube2 = Cube::new(0.7, Vector3d::new(-0.5, 0.3, 0.3));
 
-    let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-    let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-    let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
-    let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
-
-    // faces
-    let mut triangles = vec![
-        // floor
-        Triangle3d::new(v1, v2, v3, red),
-        Triangle3d::new(v1, v3, v4, red),
-        // lid
-        Triangle3d::new(v5, v6, v7, blue),
-        Triangle3d::new(v5, v7, v8, blue),
-        // sides
-        Triangle3d::new(v1, v2, v6, green),
-        Triangle3d::new(v1, v5, v6, green),
-        Triangle3d::new(v2, v3, v7, cyan),
-        Triangle3d::new(v2, v6, v7, cyan),
-        Triangle3d::new(v3, v4, v8, yellow),
-        Triangle3d::new(v3, v7, v8, yellow),
-        Triangle3d::new(v4, v1, v5, magenta),
-        Triangle3d::new(v4, v8, v5, magenta),
-    ];
-
-    for triangle in triangles.iter_mut() {
-        triangle.p1 += cube_origin;
-        triangle.p2 += cube_origin;
-        triangle.p3 += cube_origin;
-    }
+    let mut triangles = cube.triangles.clone();
+    triangles.append(&mut (cube2.triangles.clone()));
 
     // let tile_size = 0.2;
     // for y_ in -100..100 {
@@ -125,7 +78,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let angle_increment: f64 = 0.03;
     let mut camera_phi: f64 = 0.0;
     let mut camera_theta: f64 = PI / 2.0;
-    let mut e = Vector3d::new(gimbal_radius, 0.0, 0.0) * 2.0; // cam pos
+    let mut e; // cam pos
 
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         // render loop
@@ -168,7 +121,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         // camera space stuff
         // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
-        let a = cube_origin.clone(); // look at
+        let a = Vector3d::zero(); // look at
         let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
         let g = a - e;
 

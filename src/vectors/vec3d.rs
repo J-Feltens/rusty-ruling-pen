@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::vectors::{IntegerVector2d, Vector2d};
+use crate::vectors::Vector2d;
 
 /*
     3d implementation of Vector2d
@@ -42,7 +42,6 @@ impl Vector3d {
         let len = self.length().abs();
         if len == 0.0 {
             panic!("Trying to normalize a vector with length zero!!");
-            return Self::zero();
         } else {
             return Self {
                 x: self.x / len,

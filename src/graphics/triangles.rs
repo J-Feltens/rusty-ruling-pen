@@ -1,7 +1,4 @@
-use crate::{
-    graphics::{Color, triangles},
-    vectors::{IntegerVector2d, Vector3d},
-};
+use crate::{graphics::Color, vectors::Vector3d};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Triangle3d {

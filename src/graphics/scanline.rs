@@ -1,5 +1,5 @@
 use crate::{
-    graphics::{Canvas, Color, rgb2u32},
+    graphics::{Canvas, Color},
     vectors::{IntegerVector2d, Vector2d},
 };
 
@@ -79,7 +79,7 @@ impl EdgeTableEntry {
 
     pub fn to_points(&self) -> (Vector2d, Vector2d) {
         let x_upper =
-            (self.y_upper as f64 - self.y_lower as f64 + (1.0 / self.dx_dy) * self.x_lower as f64);
+            self.y_upper as f64 - self.y_lower as f64 + (1.0 / self.dx_dy) * self.x_lower as f64;
 
         return (
             Vector2d::new(self.x_lower as f64, self.y_lower as f64),
@@ -114,7 +114,7 @@ impl EdgeTable {
         );
         println!("-------------+--------------+--------------+--------------+---------------");
 
-        for (i, edge) in self.list.iter().enumerate() {
+        for edge in self.list.iter() {
             println!(
                 "e_{0: <10} | {1: <12} | {2: <12} | {3: <12} | {4: <12}",
                 edge.id,
@@ -186,7 +186,7 @@ impl ActiveEdgeTable {
         );
         println!("-------------+--------------+--------------+--------------");
 
-        for (i, edge) in self.list.iter().enumerate() {
+        for edge in self.list.iter() {
             println!(
                 "e_{0: <10} | {1: <12} | {2: <12} | {3: <12}",
                 edge.id,

@@ -1,8 +1,4 @@
-use std::{
-    fmt,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
-    vec,
-};
+use std::fmt;
 
 use crate::vectors::Vector2d;
 

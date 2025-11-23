@@ -1,7 +1,3 @@
-use std::ptr::null;
-
-use crate::util::interpolate1d;
-
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Color {
     pub r: f64,

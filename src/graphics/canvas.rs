@@ -1,9 +1,6 @@
 use core::f64;
 
-use crate::{
-    graphics::{Color, alpha_blend, rgb2u32},
-    util::interpolate1d,
-};
+use crate::graphics::{Color, alpha_blend};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Canvas {

@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::vectors::{IntegerVector2d, Vector2d, Vector3d};
+use crate::vectors::{Vector2d, Vector3d};
 
 /*
     3d implementation of Vector2d
