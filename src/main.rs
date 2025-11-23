@@ -7,6 +7,7 @@ use std::{thread, time};
 use crate::graphics::Cube;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
 use crate::graphics::{Canvas, WHITE};
+use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 
@@ -60,25 +61,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut triangles = cube.triangles.clone();
     triangles.append(&mut (cube2.triangles.clone()));
 
-    // let tile_size = 0.2;
-    // for y_ in -100..100 {
-    //     for x_ in -100..100 {
-    //         let (x, y) = (x_ as f64 * tile_size, y_ as f64 * tile_size);
-    //         let c1 = Vector3d::new(x, y, 0.0);
-    //         let c2 = Vector3d::new(x + tile_size, y, 0.0);
-    //         let c3 = Vector3d::new(x + tile_size, y + tile_size, 0.0);
-    //         let c4 = Vector3d::new(x, y + tile_size, 0.0);
-    //         triangles.push(Triangle3d::new(c1, c2, c3, red));
-    //         triangles.push(Triangle3d::new(c1, c3, c4, green));
-    //     }
-    // }
-
     // spherical coords for simple camera movement
     let gimbal_radius: f64 = 15.0;
     let angle_increment: f64 = 0.03;
     let mut camera_phi: f64 = 0.0;
     let mut camera_theta: f64 = PI / 2.0;
     let mut e; // cam pos
+
+    // projection stuff
+    let l = -2.0;
+    let r = 2.0;
+    let b = -2.0;
+    let t = 2.0;
+    let n = 1.0;
+    let f = 10.0;
+
+    let perspective_projection_matrix = calc_perspective_matrix(l, r, b, t, n, f);
 
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         // render loop
@@ -138,28 +136,6 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             v_extended,
             w_extended,
             Vector4d::new(0.0, 0.0, 0.0, 1.0),
-        );
-
-        // projection stuff
-        let l = -2.0;
-        let r = 2.0;
-        let b = -2.0;
-        let t = 2.0;
-        let n = 1.0;
-        let f = 10.0;
-
-        let ortho_projection_matrix = Matrix4x4::from_vecs(
-            Vector4d::new(2.0 / (r - l), 0.0, 0.0, -(r + l) / (r - l)),
-            Vector4d::new(0.0, 2.0 / (t - b), 0.0, -(t + b) / (t - b)),
-            Vector4d::new(0.0, 0.0, 1.0 / (n - f), -n / (f - n)),
-            Vector4d::new(0.0, 0.0, 0.0, 1.0),
-        );
-
-        let perspective_projection_matrix = Matrix4x4::from_vecs(
-            Vector4d::new((2.0 * n) / (r - l), 0.0, (l + r) / (r - l), 0.0),
-            Vector4d::new(0.0, (2.0 * n) / (t - b), (b + t) / (t - b), 0.0),
-            Vector4d::new(0.0, 0.0, -(n) / (f - n), -(f * n) / (f - n)),
-            Vector4d::new(0.0, 0.0, -(n) / (f - n), -(f * n) / (f - n)),
         );
 
         // finally, triangles
