@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
+use std::f64::consts::PI;
 use std::{thread, time};
 
 use crate::graphics::Cube;
@@ -19,8 +20,6 @@ const SIZE_X: usize = 512;
 const SIZE_Y: usize = 512;
 const SIZE_X_HALF: usize = SIZE_X / 2;
 const SIZE_Y_HALF: usize = SIZE_Y / 2;
-const PI: f64 = 3.141;
-
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(0);
 
@@ -142,10 +141,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         for triangle in triangles.iter() {
             let mut skip_triangle = false;
             let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
-            for (i, vertex) in vec![triangle.p1, triangle.p2, triangle.p3]
-                .iter()
-                .enumerate()
-            {
+            for (i, vertex) in triangle.vertices.iter().enumerate() {
                 let mut vec4 = Vector4d::from_vector3d(vertex, 1.0);
                 vec4 = camera_matrix.times_vec(vec4);
                 vec4 = perspective_projection_matrix.times_vec(vec4);
@@ -176,11 +172,15 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         }
 
         // update minifb with new buffer
-        window.update_with_buffer(&canvas.buffer, SIZE_X as usize, SIZE_Y as usize)?;
+        window.update_with_buffer(&canvas.buffer, SIZE_X, SIZE_Y)?;
 
         // print statistics:
-        let T = global_timer.elapsed().as_millis();
-        println!("Rendertime: {} ms ({} fps)", T, 1.0 / (T as f64 / 1000.0));
+        let interval = global_timer.elapsed().as_millis();
+        println!(
+            "Rendertime: {} ms ({} fps)",
+            interval,
+            1.0 / (interval as f64 / 1000.0)
+        );
 
         println!(
             "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",

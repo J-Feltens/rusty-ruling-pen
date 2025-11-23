@@ -16,15 +16,15 @@ impl Cube {
         let magenta = Color::new(0.0, 1.0, 1.0, 1.0);
 
         // vertices
-        let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-        let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0);
-        let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
-        let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0);
+        let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0) + center;
+        let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0) + center;
+        let v3 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0) + center;
+        let v4 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, -cube_size / 2.0) + center;
 
-        let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-        let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0);
-        let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
-        let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0);
+        let v5 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0) + center;
+        let v6 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, cube_size / 2.0) + center;
+        let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0) + center;
+        let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0) + center;
 
         // faces
         let mut triangles = vec![
@@ -44,12 +44,6 @@ impl Cube {
             Triangle3d::new(v4, v1, v5, magenta),
             Triangle3d::new(v4, v8, v5, magenta),
         ];
-
-        for triangle in triangles.iter_mut() {
-            triangle.p1 += center;
-            triangle.p2 += center;
-            triangle.p3 += center;
-        }
 
         return Self { triangles };
     }
