@@ -130,15 +130,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         // render loop
         canvas.reset();
-        canvas.checker(
-            &WHITE,
-            &Color {
-                r: (0.0),
-                g: (0.0),
-                b: (0.0),
-                a: (0.1),
-            },
-        );
+        canvas.reset_z_buffer();
 
         // get active keys
         let keys_down = window.get_keys();
@@ -236,10 +228,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                     skip_triangle = true;
                 }
 
+                let mut attrs = triangle.color.as_f64_vec();
+                attrs.push(vec4.z);
+
                 let ivec2 = IntegerVector2d::new(
                     (vec3.x * SIZE_X_HALF as f64) as i32 + SIZE_X_HALF as i32,
                     (vec3.y * SIZE_Y_HALF as f64) as i32 + SIZE_Y_HALF as i32,
-                    triangle.color.as_f64_vec(),
+                    attrs,
                 );
                 triangle_projected[i] = ivec2;
             }
@@ -259,23 +254,23 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         println!("Rendertime: {} ms ({} fps)", T, 1.0 / (T as f64 / 1000.0));
 
         println!(
-            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "Camera Position", e.x, e.y, e.z
+            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "Camera Position:", e.x, e.y, e.z
         );
         println!(
-            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
             "u:", u.x, u.y, u.z
         );
         println!(
-            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
             "v:", v.x, v.y, v.z
         );
         println!(
-            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
             "w:", w.x, w.y, w.z
         );
         println!(
-            "   {0: <20}: {1: <4.3},   {2: <4.3},   {3: <4.3}",
+            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
             "g:", g.x, g.y, g.z
         );
         global_timer = Instant::now();

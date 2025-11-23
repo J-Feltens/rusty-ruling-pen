@@ -365,7 +365,8 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
 
                 while cur_x <= edge2.x_intersect {
                     let color = Color::new(cur_attrs[0], cur_attrs[1], cur_attrs[2], cur_attrs[3]);
-                    canvas.set_pixel((cur_x.round() as i32, y_scan), &color);
+                    let z = cur_attrs[4];
+                    canvas.set_pixel_with_z((cur_x.round() as i32, y_scan), z, &color);
                     cur_x += 1.0;
                     for i in 0..cur_attrs.len() {
                         cur_attrs[i] += dattrs[i];
