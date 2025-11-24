@@ -1,3 +1,4 @@
+use crate::util::clamp;
 use rand::Rng;
 
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
@@ -20,7 +21,7 @@ impl Color {
 
     pub fn named_color(color: &str) -> Self {
         if color == "red" {
-            Self::new(0.0, 0.0, 0.0, 1.0)
+            Self::new(1.0, 0.0, 0.0, 1.0)
         } else if color == "green" {
             Self::new(0.0, 1.0, 0.0, 1.0)
         } else if color == "blue" {
@@ -69,8 +70,15 @@ impl Color {
         return vec![self.r, self.g, self.b, self.a];
     }
 
-    pub fn apply_lighting(&self, l: f64) -> Color {
+    pub fn apply_lighting(&self, mut l: f64) -> Color {
+        l = clamp(l);
         Self::new(self.r * l, self.g * l, self.b * l, self.a)
+    }
+    pub fn apply_colored_lighting(&self, mut r: f64, mut g: f64, mut b: f64) -> Color {
+        r = clamp(r);
+        g = clamp(g);
+        b = clamp(b);
+        Self::new(self.r * r, self.g * g, self.b * b, self.a)
     }
 }
 

@@ -19,14 +19,33 @@ pub fn phong_frag(
     */
 
     // Phong
-    // diffuse
-    let mut l_total = 0.0;
+    let ambient = 0.05;
+    let diffuse_fac = 0.5;
+    let specular_fac = 0.9;
+    let shinyness = 100.0;
+
+    let mut r_total = ambient;
+    let mut g_total = ambient;
+    let mut b_total = ambient;
+
     for light in lights {
         let l = (light.pos - x).normalize();
-        let l_diff = light.emission * n.dot(l);
-        l_total += clamp(l_diff);
+
+        // diffuse
+        let n_dot_l = clamp(n.dot(l));
+        let l_diff = light.strength * n_dot_l * diffuse_fac;
+        r_total += l_diff * light.emission.r;
+        g_total += l_diff * light.emission.g;
+        b_total += l_diff * light.emission.b;
+
+        // specular
+        let r = n * n_dot_l * 2.0 - l;
+        let l_spec = light.strength * v.dot(r).powf(shinyness) * specular_fac;
+
+        r_total += l_spec * light.emission.r;
+        g_total += l_spec * light.emission.g;
+        b_total += l_spec * light.emission.b;
     }
 
-    l_total = clamp(l_total);
-    return color.apply_lighting(l_total);
+    return color.apply_colored_lighting(r_total, g_total, b_total);
 }

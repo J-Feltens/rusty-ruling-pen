@@ -50,15 +50,23 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"));
 
     // light
-    let light = PointLight::new(Vector3d::new(5.0, 5.0, 5.0), 1.0);
+    let light = PointLight::new(
+        Vector3d::new(1.0, 3.0, 5.0),
+        1.0,
+        Color::named_color("white"),
+    );
+    let light2 = PointLight::new(
+        Vector3d::new(3.0, -8.0, -2.0),
+        0.2,
+        Color::named_color("white"),
+    );
     canvas.add_point_light(light);
-    let light2 = PointLight::new(Vector3d::new(5.0, 5.0, -5.0), 1.0);
     canvas.add_point_light(light2);
 
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 1.0, 32, 16, &Color::named_color("white"));
+    let torus = calc_torus(2.0, 1.0, 128 * 4, 64 * 4, &Color::named_color("cyan"));
 
     let mut triangles = vec![];
 
@@ -71,7 +79,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let angle_increment: f64 = 0.05;
     let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
-    let mut camera_theta: f64 = PI / 2.0;
+    let mut camera_theta: f64 = 0.8;
 
     // projection stuff
     let l = -2.0;

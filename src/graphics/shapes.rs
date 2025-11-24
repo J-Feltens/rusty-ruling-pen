@@ -67,9 +67,7 @@ pub fn calc_torus(
             vertices.push(new_vec);
         }
     }
-    for (i, vertex) in vertices.iter().enumerate() {
-        println!("{}: {}", i, vertex);
-    }
+
     let mut triangles = vec![];
     for major in 0..major_resolution {
         for minor in 0..minor_resolution {
