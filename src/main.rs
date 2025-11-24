@@ -52,13 +52,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // light
     let light = PointLight::new(
         Vector3d::new(1.0, 3.0, 5.0),
-        1.0,
+        0.8,
         Color::named_color("white"),
     );
     let light2 = PointLight::new(
         Vector3d::new(3.0, -8.0, -2.0),
         0.2,
-        Color::named_color("white"),
+        Color::named_color("yellow"),
     );
     canvas.add_point_light(light);
     canvas.add_point_light(light2);
