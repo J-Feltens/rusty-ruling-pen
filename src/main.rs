@@ -2,15 +2,15 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
-use std::f64::consts::PI;
-use std::{thread, time};
-
 use crate::graphics::Cube;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
 use crate::graphics::{Canvas, WHITE};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
+use std::f64::consts::PI;
+use std::process::exit;
+use std::{thread, time};
 
 pub mod graphics;
 pub mod util;
@@ -55,14 +55,15 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // cube s
 
     let cube = Cube::new(1.2, Vector3d::zero());
-    let cube2 = Cube::new(0.7, Vector3d::new(-0.5, 0.3, 0.3));
+    let cube2 = Cube::new(0.7, Vector3d::new(-0.5, 0.5, 0.5));
 
     let mut triangles = cube.triangles.clone();
     triangles.append(&mut (cube2.triangles.clone()));
 
     // spherical coords for simple camera movement
-    let gimbal_radius: f64 = 15.0;
-    let angle_increment: f64 = 0.03;
+    let mut gimbal_radius: f64 = 15.0;
+    let angle_increment: f64 = 0.05;
+    let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
     let mut camera_theta: f64 = PI / 2.0;
     let mut e; // cam pos
@@ -99,6 +100,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         }
         if keys_down.contains(&Key::D) {
             increment_phi += angle_increment;
+        }
+        if keys_down.contains(&Key::E) {
+            gimbal_radius += radius_increment;
+        }
+        if keys_down.contains(&Key::Q) {
+            gimbal_radius -= radius_increment;
         }
         // increment camera angles
         camera_theta += increment_theta;
@@ -139,6 +146,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         // finally, triangles
         for triangle in triangles.iter() {
+            // backface culling
+            if w.dot(triangle.normal) < 0.0 {
+                continue;
+            }
+
             let mut skip_triangle = false;
             let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
             for (i, vertex) in triangle.vertices.iter().enumerate() {

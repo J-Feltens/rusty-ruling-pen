@@ -3,6 +3,7 @@ use crate::{graphics::Color, vectors::Vector3d};
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Triangle3d {
     pub vertices: Vec<Vector3d>,
+    pub normal: Vector3d,
 
     pub color: Color,
 }
@@ -11,6 +12,7 @@ impl Triangle3d {
     pub fn new(p1: Vector3d, p2: Vector3d, p3: Vector3d, color: Color) -> Self {
         Self {
             vertices: vec![p1, p2, p3],
+            normal: (p2 - p1).cross(p3 - p1).normalize(),
             color,
         }
     }
