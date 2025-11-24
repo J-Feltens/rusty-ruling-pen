@@ -18,6 +18,28 @@ impl Color {
         }
     }
 
+    pub fn named_color(color: &str) -> Self {
+        if color == "red" {
+            Self::new(0.0, 0.0, 0.0, 1.0)
+        } else if color == "green" {
+            Self::new(0.0, 1.0, 0.0, 1.0)
+        } else if color == "blue" {
+            Self::new(0.0, 0.0, 1.0, 1.0)
+        } else if color == "cyan" {
+            Self::new(0.0, 1.0, 1.0, 1.0)
+        } else if color == "yellow" {
+            Self::new(1.0, 1.0, 0.0, 1.0)
+        } else if color == "magenta" {
+            Self::new(1.0, 0.0, 1.0, 1.0)
+        } else if color == "black" {
+            Self::new(0.0, 0.0, 0.0, 1.0)
+        } else if color == "white" {
+            Self::new(1.0, 1.0, 1.0, 1.0)
+        } else {
+            panic!("I don't have all your colors... {}", color);
+        }
+    }
+
     pub fn random() -> Self {
         let mut rng = rand::rng();
         Self {
@@ -65,61 +87,3 @@ pub fn alpha_blend(color_1: &Color, color_2: &Color) -> Color {
         a: (color_2.a),
     };
 }
-
-pub const TRANSPARENT: Color = Color {
-    r: 0.0,
-    g: 0.0,
-    b: 0.0,
-    a: 0.0,
-};
-pub const BLACK: Color = Color {
-    r: 0.0,
-    g: 0.0,
-    b: 0.0,
-    a: 1.0,
-};
-pub const WHITE: Color = Color {
-    r: 1.0,
-    g: 1.0,
-    b: 1.0,
-    a: 1.0,
-};
-pub const MAGENTA: Color = Color {
-    r: 1.0,
-    g: 0.0,
-    b: 1.0,
-    a: 1.0,
-};
-pub const CYAN: Color = Color {
-    r: 0.0,
-    g: 1.0,
-    b: 1.0,
-    a: 1.0,
-};
-pub const YELLOW: Color = Color {
-    r: 1.0,
-    g: 1.0,
-    b: 0.0,
-    a: 1.0,
-};
-
-pub const RED: Color = Color {
-    r: 1.0,
-    g: 0.0,
-    b: 0.0,
-    a: 1.0,
-};
-
-pub const GREEN: Color = Color {
-    r: 0.0,
-    g: 1.0,
-    b: 0.0,
-    a: 1.0,
-};
-
-pub const BLUE: Color = Color {
-    r: 0.0,
-    g: 0.0,
-    b: 1.0,
-    a: 1.0,
-};

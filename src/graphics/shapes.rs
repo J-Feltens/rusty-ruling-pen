@@ -1,4 +1,4 @@
-use crate::graphics::{CYAN, Color, MAGENTA, Triangle3d};
+use crate::graphics::{Color, Triangle3d};
 use crate::util::linspace;
 use crate::vectors::{Matrix3x3, Vector3d};
 use std::f64::consts::PI;

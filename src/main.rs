@@ -3,7 +3,7 @@ use std::time::Instant;
 use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{BLACK, CYAN, Canvas, PointLight};
+use crate::graphics::{Canvas, PointLight};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -47,18 +47,18 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, BLACK.clone());
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"));
 
     // light
     let light = PointLight::new(Vector3d::new(5.0, 5.0, 5.0), 1.0);
     canvas.add_point_light(light);
-    let light = PointLight::new(Vector3d::new(-5.0, -5.0, -5.0), 1.0);
-    canvas.add_point_light(light);
+    let light2 = PointLight::new(Vector3d::new(5.0, 5.0, -5.0), 1.0);
+    canvas.add_point_light(light2);
 
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 1.0, 32, 16, &CYAN);
+    let torus = calc_torus(2.0, 1.0, 32, 16, &Color::named_color("white"));
 
     let mut triangles = vec![];
 

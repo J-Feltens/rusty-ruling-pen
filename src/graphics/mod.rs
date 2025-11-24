@@ -8,7 +8,7 @@ pub mod triangles;
 
 // Re-export so callers can write `sprites::Sprite` directly
 pub use canvas::Canvas;
-pub use colors::{BLACK, BLUE, CYAN, Color, GREEN, MAGENTA, RED, WHITE, YELLOW, alpha_blend};
+pub use colors::{Color, alpha_blend};
 pub use lighting::PointLight;
 pub use shapes::{calc_cube, calc_torus};
 pub use triangles::Triangle3d;

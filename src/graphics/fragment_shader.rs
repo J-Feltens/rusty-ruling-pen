@@ -24,7 +24,7 @@ pub fn phong_frag(
     for light in lights {
         let l = (light.pos - x).normalize();
         let l_diff = light.emission * n.dot(l);
-        l_total += l_diff;
+        l_total += clamp(l_diff);
     }
 
     l_total = clamp(l_total);
