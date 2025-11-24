@@ -2,15 +2,14 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
-use crate::graphics::Cube;
+use crate::graphics::colors::RED;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{Canvas, WHITE};
+use crate::graphics::{CYAN, Canvas, WHITE};
+use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use std::f64::consts::PI;
-use std::process::exit;
-use std::{thread, time};
 
 pub mod graphics;
 pub mod util;
@@ -21,7 +20,6 @@ const SIZE_Y: usize = 512;
 const SIZE_X_HALF: usize = SIZE_X / 2;
 const SIZE_Y_HALF: usize = SIZE_Y / 2;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const ANIM_INTERVAL: time::Duration = time::Duration::from_millis(0);
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -52,16 +50,21 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
-    // cube s
+    // cube
+    // let cube = calc_cube(1.2, Vector3d::zero());
+    // let cube2 = calc_cube(0.7, Vector3d::new(-0.5, 0.5, 0.5));
 
-    let cube = Cube::new(1.2, Vector3d::zero());
-    let cube2 = Cube::new(0.7, Vector3d::new(-0.5, 0.5, 0.5));
+    // let mut triangles = cube.clone();
+    // triangles.append(&mut (cube2.clone()));
 
-    let mut triangles = cube.triangles.clone();
-    triangles.append(&mut (cube2.triangles.clone()));
+    let triangles = calc_torus(2.0, 0.5, 16, 16, &CYAN);
+
+    for triangle in triangles.iter() {
+        println!("{}", triangle);
+    }
 
     // spherical coords for simple camera movement
-    let mut gimbal_radius: f64 = 15.0;
+    let mut gimbal_radius: f64 = 30.0;
     let angle_increment: f64 = 0.05;
     let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
@@ -134,13 +137,10 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         let u = t.cross(w).normalize();
         let v = w.cross(u);
 
-        let u_extended = Vector4d::from_vector3d(&u, -u.dot(e));
-        let v_extended = Vector4d::from_vector3d(&v, -v.dot(e));
-        let w_extended = Vector4d::from_vector3d(&w, -w.dot(e));
         let camera_matrix = Matrix4x4::from_vecs(
-            u_extended,
-            v_extended,
-            w_extended,
+            Vector4d::from_vector3d(&u, -u.dot(e)),
+            Vector4d::from_vector3d(&v, -v.dot(e)),
+            Vector4d::from_vector3d(&w, -w.dot(e)),
             Vector4d::new(0.0, 0.0, 0.0, 1.0),
         );
 
@@ -215,7 +215,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             "g:", g.x, g.y, g.z
         );
         global_timer = Instant::now();
-        thread::sleep(ANIM_INTERVAL);
+        // thread::sleep(ANIM_INTERVAL);
     }
 
     Ok(())

@@ -75,13 +75,13 @@ impl Matrix3x3 {
                 u.x * u.z * one_minus_cos_theta + u.y * sin_theta,
             ),
             Vector3d::new(
-                u.x * u.y * one_minus_cos_theta * u.z * sin_theta,
+                u.x * u.y * one_minus_cos_theta + u.z * sin_theta,
                 u.y * u.y * one_minus_cos_theta + cos_theta,
                 u.y * u.z * one_minus_cos_theta - u.x * sin_theta,
             ),
             Vector3d::new(
-                u.x * u.y * one_minus_cos_theta - u.y * sin_theta,
-                u.x * u.x * one_minus_cos_theta + u.x * sin_theta,
+                u.x * u.z * one_minus_cos_theta - u.y * sin_theta,
+                u.y * u.z * one_minus_cos_theta + u.x * sin_theta,
                 u.z * u.z * one_minus_cos_theta + cos_theta,
             ),
         )

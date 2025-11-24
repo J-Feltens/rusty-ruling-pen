@@ -1,4 +1,5 @@
 use crate::{graphics::Color, vectors::Vector3d};
+use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Triangle3d {
@@ -9,11 +10,11 @@ pub struct Triangle3d {
 }
 
 impl Triangle3d {
-    pub fn new(p1: Vector3d, p2: Vector3d, p3: Vector3d, color: Color) -> Self {
+    pub fn new(p1: Vector3d, p2: Vector3d, p3: Vector3d, color: &Color) -> Self {
         Self {
             vertices: vec![p1, p2, p3],
             normal: (p2 - p1).cross(p3 - p1).normalize(),
-            color,
+            color: color.clone(),
         }
     }
 
@@ -35,5 +36,19 @@ impl Triangle3d {
     }
     pub fn p3_mut(&mut self) -> &mut Vector3d {
         &mut self.vertices[2]
+    }
+}
+
+impl fmt::Display for Triangle3d {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Triangle [{}, {}, {}] with normal {}",
+            self.p1(),
+            self.p2(),
+            self.p3(),
+            self.normal
+        )
     }
 }

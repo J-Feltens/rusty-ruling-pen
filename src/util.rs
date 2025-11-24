@@ -1,3 +1,4 @@
+use crate::graphics::Triangle3d;
 use crate::vectors::Vector4d;
 use crate::vectors::matrices::Matrix4x4;
 
@@ -28,4 +29,19 @@ pub fn calc_ortho_matrix(l: f64, r: f64, b: f64, t: f64, n: f64, f: f64) -> Matr
         Vector4d::new(0.0, 0.0, 1.0 / (n - f), -n / (f - n)),
         Vector4d::new(0.0, 0.0, 0.0, 1.0),
     );
+}
+
+pub fn linspace(start: f64, end: f64, n: usize) -> Vec<f64> {
+    /*
+    [start, end)
+    Including start, excluding end
+     */
+    assert!(start <= end);
+    let mut ret = vec![0.0; n];
+    let delta = (end - start) / n as f64;
+    for i in 0..n {
+        ret[i] = start + i as f64 * delta;
+    }
+
+    return ret;
 }
