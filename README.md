@@ -14,8 +14,9 @@
     - values in the attrs-vector are interpolated during rasterization
     - current attrs configuration:
         - 0-2: pos in camera space
-        - 3-5: normal in camera space
-        - 6-9: rgba, each [0.0, ... 1.0]
+        - 3: projected z
+        - 4-6: normal in camera space
+        - 7-10: rgba, each [0.0, ... 1.0]
     - fields:
         - x: i32
         - y: i32

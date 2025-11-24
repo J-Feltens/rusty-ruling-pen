@@ -4,7 +4,7 @@ use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::colors::RED;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{CYAN, Canvas, PointLight, Triangle3d, WHITE};
+use crate::graphics::{BLACK, CYAN, Canvas, PointLight, Triangle3d, WHITE};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -48,21 +48,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, BLACK.clone());
 
     // light
     let light = PointLight::new(Vector3d::new(5.0, 5.0, 5.0), 1.0);
+    canvas.add_light(light);
 
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 0.5, 16, 16, &CYAN);
+    let torus = calc_torus(2.0, 1.0, 32, 16, &CYAN);
 
     let mut triangles = vec![];
 
-    // triangles.append(&mut (torus.clone()));
-    triangles.append(&mut (cube.clone()));
-    triangles.append(&mut (cube2.clone()));
+    triangles.append(&mut (torus.clone()));
+    // triangles.append(&mut (cube.clone()));
+    // triangles.append(&mut (cube2.clone()));
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;
@@ -144,8 +145,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             Vector4d::new(0.0, 0.0, 0.0, 1.0),
         );
 
-        // light
-        let light_cam_space = camera_matrix.times_vec(Vector4d::from_vector3d(&light.pos, 1.0));
+        // transform lights to camera space
+        let lights_cam_space: Vec<_> = canvas
+            .lights
+            .iter()
+            .map(|light| camera_matrix.times_vec(Vector4d::from_vector3d(&light.pos, 1.0)))
+            .collect();
 
         // finally, triangles
         for triangle in triangles.iter() {
@@ -180,13 +185,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                 attrs[0] = vertex_cam_space.x;
                 attrs[1] = vertex_cam_space.y;
                 attrs[2] = vertex_cam_space.z;
-                attrs[3] = normal_cam_space.x;
-                attrs[4] = normal_cam_space.y;
-                attrs[5] = normal_cam_space.z;
-                attrs[6] = triangle.color.r;
-                attrs[7] = triangle.color.g;
-                attrs[8] = triangle.color.b;
-                attrs[9] = triangle.color.a;
+                attrs[3] = vertex_projected.z;
+                attrs[4] = normal_cam_space.x;
+                attrs[5] = normal_cam_space.y;
+                attrs[6] = normal_cam_space.z;
+                attrs[7] = triangle.color.r;
+                attrs[8] = triangle.color.g;
+                attrs[9] = triangle.color.b;
+                attrs[10] = triangle.color.a;
 
                 let ivec2 = IntegerVector2d::new(
                     (vec3.x * SIZE_X_HALF as f64) as i32 + SIZE_X_HALF as i32,
@@ -203,7 +209,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             draw_polygon_onto_buffer(
                 &triangle_projected,
                 &mut canvas,
-                light_cam_space.truncate_to_3d(),
+                lights_cam_space[0].truncate_to_3d(),
             );
         }
 

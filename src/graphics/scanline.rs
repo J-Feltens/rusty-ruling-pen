@@ -340,14 +340,19 @@ pub fn draw_polygon_onto_buffer(
 
                 while cur_x <= edge2.x_intersect {
                     // call fragment shader
-                    let color = Color::new(cur_attrs[6], cur_attrs[7], cur_attrs[8], cur_attrs[9]);
+                    let z_projected = cur_attrs[3];
+                    let color = Color::new(cur_attrs[7], cur_attrs[8], cur_attrs[9], cur_attrs[10]);
                     let x = Vector3d::new(cur_attrs[0], cur_attrs[1], cur_attrs[2]);
-                    let n = Vector3d::new(cur_attrs[3], cur_attrs[4], cur_attrs[5]).normalize();
+                    let n = Vector3d::new(cur_attrs[4], cur_attrs[5], cur_attrs[6]).normalize();
                     let l = (light_cam_space - x).normalize();
                     let v = (x * -1.0).normalize();
                     let phong_color = phong_frag(x, n, l, v, color);
 
-                    canvas.set_pixel_with_z((cur_x.round() as i32, y_scan), x.z, &phong_color);
+                    canvas.set_pixel_with_z(
+                        (cur_x.round() as i32, y_scan),
+                        z_projected,
+                        &phong_color,
+                    );
                     cur_x += 1.0;
                     for i in 0..cur_attrs.len() {
                         cur_attrs[i] += dattrs[i];
