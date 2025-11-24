@@ -2,9 +2,8 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
-use crate::graphics::colors::RED;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{BLACK, CYAN, Canvas, PointLight, Triangle3d, WHITE};
+use crate::graphics::{BLACK, CYAN, Canvas, PointLight};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -52,7 +51,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     // light
     let light = PointLight::new(Vector3d::new(5.0, 5.0, 5.0), 1.0);
-    canvas.add_light(light);
+    canvas.add_point_light(light);
+    let light = PointLight::new(Vector3d::new(-5.0, -5.0, -5.0), 1.0);
+    canvas.add_point_light(light);
 
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
@@ -146,11 +147,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         );
 
         // transform lights to camera space
-        let lights_cam_space: Vec<_> = canvas
-            .lights
-            .iter()
-            .map(|light| camera_matrix.times_vec(Vector4d::from_vector3d(&light.pos, 1.0)))
-            .collect();
+
+        let mut lights_cam_space_reallight = canvas.lights.clone();
+        for light in lights_cam_space_reallight.iter_mut() {
+            light.pos = camera_matrix
+                .times_vec(Vector4d::from_vector3d(&light.pos, 1.0))
+                .truncate_to_3d();
+        }
 
         // finally, triangles
         for triangle in triangles.iter() {
@@ -163,7 +166,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let mut skip_triangle = false;
             let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
             for (i, vertex) in triangle.vertices.iter().enumerate() {
-                let vertex_homo = Vector4d::from_vector3d(vertex, 1.0);
+                let vertex_homo = Vector4d::from_vector3d(vertex, 1.0); // hehe
 
                 // transform to camera space
                 let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
@@ -209,7 +212,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             draw_polygon_onto_buffer(
                 &triangle_projected,
                 &mut canvas,
-                lights_cam_space[0].truncate_to_3d(),
+                &lights_cam_space_reallight,
             );
         }
 

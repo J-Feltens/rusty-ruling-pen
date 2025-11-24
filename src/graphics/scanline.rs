@@ -204,7 +204,7 @@ impl ActiveEdgeTable {
 pub fn draw_polygon_onto_buffer(
     points: &Vec<IntegerVector2d>,
     canvas: &mut Canvas,
-    light_cam_space: Vector3d,
+    light_cam_space_reallight: &Vec<PointLight>,
 ) {
     /*
         implements scanline algorithm with some extended features/bugs courtesy of yours truly.
@@ -344,9 +344,9 @@ pub fn draw_polygon_onto_buffer(
                     let color = Color::new(cur_attrs[7], cur_attrs[8], cur_attrs[9], cur_attrs[10]);
                     let x = Vector3d::new(cur_attrs[0], cur_attrs[1], cur_attrs[2]);
                     let n = Vector3d::new(cur_attrs[4], cur_attrs[5], cur_attrs[6]).normalize();
-                    let l = (light_cam_space - x).normalize();
+                    // let l = (light_cam_space - x).normalize();
                     let v = (x * -1.0).normalize();
-                    let phong_color = phong_frag(x, n, l, v, color);
+                    let phong_color = phong_frag(x, n, v, color, &light_cam_space_reallight);
 
                     canvas.set_pixel_with_z(
                         (cur_x.round() as i32, y_scan),

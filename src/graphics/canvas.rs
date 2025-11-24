@@ -52,7 +52,7 @@ impl Canvas {
         return x >= 0 && (x as usize) < self.size_x && y >= 0 && (y as usize) < self.size_y;
     }
 
-    pub fn add_light(&mut self, light: PointLight) {
+    pub fn add_point_light(&mut self, light: PointLight) {
         self.lights.push(light);
     }
 

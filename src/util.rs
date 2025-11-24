@@ -45,3 +45,16 @@ pub fn linspace(start: f64, end: f64, n: usize) -> Vec<f64> {
 
     return ret;
 }
+
+pub fn clamp(val: f64) -> f64 {
+    /*
+    clamps value into range [0, 1]
+    */
+    if val < 0.0 {
+        0.0
+    } else if val > 1.0 {
+        1.0
+    } else {
+        val
+    }
+}
