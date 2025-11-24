@@ -4,7 +4,7 @@ use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::colors::RED;
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{CYAN, Canvas, WHITE};
+use crate::graphics::{CYAN, Canvas, PointLight, Triangle3d, WHITE};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -50,18 +50,19 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, WHITE.clone());
 
+    // light
+    let light = PointLight::new(Vector3d::new(5.0, 5.0, 5.0), 1.0);
+
     // cube
-    // let cube = calc_cube(1.2, Vector3d::zero());
-    // let cube2 = calc_cube(0.7, Vector3d::new(-0.5, 0.5, 0.5));
+    let cube = calc_cube(2.0, Vector3d::zero());
+    let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
+    let torus = calc_torus(2.0, 0.5, 16, 16, &CYAN);
 
-    // let mut triangles = cube.clone();
-    // triangles.append(&mut (cube2.clone()));
+    let mut triangles = vec![];
 
-    let triangles = calc_torus(2.0, 0.5, 16, 16, &CYAN);
-
-    for triangle in triangles.iter() {
-        println!("{}", triangle);
-    }
+    // triangles.append(&mut (torus.clone()));
+    triangles.append(&mut (cube.clone()));
+    triangles.append(&mut (cube2.clone()));
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;
@@ -69,7 +70,6 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
     let mut camera_theta: f64 = PI / 2.0;
-    let mut e; // cam pos
 
     // projection stuff
     let l = -2.0;
@@ -120,7 +120,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             camera_theta = 0.0000001;
         }
         // set camera pos (eye)
-        e = Vector3d::new(
+        let e = Vector3d::new(
             gimbal_radius * camera_theta.sin() * camera_phi.cos(),
             gimbal_radius * camera_theta.sin() * camera_phi.sin(),
             gimbal_radius * camera_theta.cos(),
@@ -144,9 +144,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             Vector4d::new(0.0, 0.0, 0.0, 1.0),
         );
 
+        // light
+        let light_cam_space = camera_matrix.times_vec(Vector4d::from_vector3d(&light.pos, 1.0));
+
         // finally, triangles
         for triangle in triangles.iter() {
             // backface culling
+            // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
             if w.dot(triangle.normal) < 0.0 {
                 continue;
             }
@@ -154,19 +158,35 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             let mut skip_triangle = false;
             let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
             for (i, vertex) in triangle.vertices.iter().enumerate() {
-                let mut vec4 = Vector4d::from_vector3d(vertex, 1.0);
-                vec4 = camera_matrix.times_vec(vec4);
-                vec4 = perspective_projection_matrix.times_vec(vec4);
+                let vertex_homo = Vector4d::from_vector3d(vertex, 1.0);
+
+                // transform to camera space
+                let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
+
+                // perspective projection
+                let vertex_projected = perspective_projection_matrix.times_vec(vertex_cam_space);
 
                 // perspective divide by z
-                let vec3 = vec4.truncate_to_3d() / vec4.u;
+                let vec3 = vertex_projected.truncate_to_3d() / vertex_projected.u;
 
                 if vec3.x < -1.0 || vec3.x > 1.0 || vec3.y < -1.0 || vec3.y > 1.0 {
                     skip_triangle = true;
                 }
 
-                let mut attrs = triangle.color.as_f64_vec();
-                attrs.push(vec4.z);
+                // store attributes like pos and normal while still in camera space
+                let normal_cam_space =
+                    camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
+                let mut attrs: Vec<f64> = vec![0.0; 11];
+                attrs[0] = vertex_cam_space.x;
+                attrs[1] = vertex_cam_space.y;
+                attrs[2] = vertex_cam_space.z;
+                attrs[3] = normal_cam_space.x;
+                attrs[4] = normal_cam_space.y;
+                attrs[5] = normal_cam_space.z;
+                attrs[6] = triangle.color.r;
+                attrs[7] = triangle.color.g;
+                attrs[8] = triangle.color.b;
+                attrs[9] = triangle.color.a;
 
                 let ivec2 = IntegerVector2d::new(
                     (vec3.x * SIZE_X_HALF as f64) as i32 + SIZE_X_HALF as i32,
@@ -176,11 +196,15 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                 triangle_projected[i] = ivec2;
             }
 
-            //cull triangles that is even partially out if bounds
+            // cull triangles that is even partially out if bounds
             if skip_triangle {
                 continue;
             }
-            draw_polygon_onto_buffer(&triangle_projected, &mut canvas, false);
+            draw_polygon_onto_buffer(
+                &triangle_projected,
+                &mut canvas,
+                light_cam_space.truncate_to_3d(),
+            );
         }
 
         // update minifb with new buffer
@@ -192,27 +216,6 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             "Rendertime: {} ms ({} fps)",
             interval,
             1.0 / (interval as f64 / 1000.0)
-        );
-
-        println!(
-            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "Camera Position:", e.x, e.y, e.z
-        );
-        println!(
-            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "u:", u.x, u.y, u.z
-        );
-        println!(
-            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "v:", v.x, v.y, v.z
-        );
-        println!(
-            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "w:", w.x, w.y, w.z
-        );
-        println!(
-            "   {0: <20} {1: <4.3},   {2: <4.3},   {3: <4.3}",
-            "g:", g.x, g.y, g.z
         );
         global_timer = Instant::now();
         // thread::sleep(ANIM_INTERVAL);

@@ -81,8 +81,10 @@ pub fn calc_torus(
                 vertices[(minor_resolution * ((major + 1) % major_resolution))
                     + ((minor + 1) % minor_resolution)],
             );
-            triangles.push(Triangle3d::new(p3, p2, p1, color));
-            triangles.push(Triangle3d::new(p2, p3, p4, color));
+
+            let rand_color = Color::random();
+            triangles.push(Triangle3d::new(p3, p2, p1, &rand_color));
+            triangles.push(Triangle3d::new(p2, p3, p4, &rand_color));
         }
     }
     return triangles;

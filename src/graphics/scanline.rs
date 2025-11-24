@@ -1,3 +1,6 @@
+use crate::graphics::PointLight;
+use crate::graphics::fragment_shader::phong_frag;
+use crate::vectors::{Vector3d, Vector4d};
 use crate::{
     graphics::{Canvas, Color},
     vectors::{IntegerVector2d, Vector2d},
@@ -198,7 +201,11 @@ impl ActiveEdgeTable {
     }
 }
 
-pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canvas, verbose: bool) {
+pub fn draw_polygon_onto_buffer(
+    points: &Vec<IntegerVector2d>,
+    canvas: &mut Canvas,
+    light_cam_space: Vector3d,
+) {
     /*
         implements scanline algorithm with some extended features/bugs courtesy of yours truly.
 
@@ -223,8 +230,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
     if points.len() <= 2 {
         return; // a line ain't enough for a _poly_gon
     }
-
-    // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
 
     // total culling of all polygons that are ever so slightly out of bounds.
     // will need major revamp to compute partial out-of-bounds polygons, something along the lines of
@@ -263,12 +268,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
         .iter()
         .position(|edge| edge.y_lower == y_scan)
     {
-        if verbose {
-            println!(
-                "Moving e_{} into active edge table",
-                edge_table.list[index].id
-            );
-        }
         let edge = edge_table.list.remove(index);
 
         // compute values for active edge entry
@@ -289,22 +288,12 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
 
     let mut iteration = 0;
     while edge_table.list.len() > 0 || active_edge_table.list.len() > 0 {
-        if verbose {
-            println!("\n--------------------------------------------------\n");
-            println!("Iteration: {iteration}, scanline_y = {y_scan}");
-        }
         // remove all edges from AET wich are entirely below y_scan
         while let Some(index) = active_edge_table
             .list
             .iter()
             .position(|edge| y_scan >= edge.y_upper)
         {
-            if verbose {
-                println!(
-                    "Removing e_{} from active edge table",
-                    active_edge_table.list[index].id
-                );
-            }
             active_edge_table.list.remove(index);
         }
 
@@ -314,12 +303,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
             .iter()
             .position(|edge| edge.y_lower as i32 == y_scan as i32)
         {
-            if verbose {
-                println!(
-                    "Moving e_{} into active edge table",
-                    edge_table.list[index].id
-                );
-            }
             let edge = edge_table.list.remove(index);
 
             // compute values for active edge entry
@@ -340,10 +323,6 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
 
         edge_table.sort();
         active_edge_table.sort();
-        if verbose {
-            edge_table.print();
-            active_edge_table.print();
-        }
 
         // draw between x_1_intersect and x_2_intersect
         if active_edge_table.list.len() >= 2 {
@@ -359,14 +338,16 @@ pub fn draw_polygon_onto_buffer(points: &Vec<IntegerVector2d>, canvas: &mut Canv
                         (edge2.attrs_intersect[i] - cur_attrs[i]) / (edge2.x_intersect - cur_x);
                 }
 
-                if verbose {
-                    println!("Drawing between edges e_{} and 3_{}", edge1.id, edge2.id);
-                }
-
                 while cur_x <= edge2.x_intersect {
-                    let color = Color::new(cur_attrs[0], cur_attrs[1], cur_attrs[2], cur_attrs[3]);
-                    let z = cur_attrs[4];
-                    canvas.set_pixel_with_z((cur_x.round() as i32, y_scan), z, &color);
+                    // call fragment shader
+                    let color = Color::new(cur_attrs[6], cur_attrs[7], cur_attrs[8], cur_attrs[9]);
+                    let x = Vector3d::new(cur_attrs[0], cur_attrs[1], cur_attrs[2]);
+                    let n = Vector3d::new(cur_attrs[3], cur_attrs[4], cur_attrs[5]).normalize();
+                    let l = (light_cam_space - x).normalize();
+                    let v = (x * -1.0).normalize();
+                    let phong_color = phong_frag(x, n, l, v, color);
+
+                    canvas.set_pixel_with_z((cur_x.round() as i32, y_scan), x.z, &phong_color);
                     cur_x += 1.0;
                     for i in 0..cur_attrs.len() {
                         cur_attrs[i] += dattrs[i];

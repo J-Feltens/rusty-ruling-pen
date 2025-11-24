@@ -1,8 +1,7 @@
 use core::f64;
 
-use crate::graphics::{Color, alpha_blend};
+use crate::graphics::{Color, PointLight, alpha_blend};
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct Canvas {
     pub size_x: usize,
     pub size_y: usize,
@@ -10,6 +9,7 @@ pub struct Canvas {
     pub buffer: Vec<u32>,
     pub z_buffer: Vec<f64>,
     pub bg_color: Color,
+    // pub lights: Vec<PointLight>,
 }
 
 impl Canvas {
@@ -21,6 +21,7 @@ impl Canvas {
             buffer: vec![bg_color.as_u32(); size_x * size_y],
             z_buffer: vec![f64::MAX; size_x * size_y],
             bg_color: bg_color,
+            // lights: vec![],
         }
     }
 
@@ -50,6 +51,10 @@ impl Canvas {
     pub fn integer_coords_in_canvas(&self, x: i32, y: i32) -> bool {
         return x >= 0 && (x as usize) < self.size_x && y >= 0 && (y as usize) < self.size_y;
     }
+
+    // pub fn add_light(&mut self, light: PointLight) {
+    //     self.lights.push(light);
+    // }
 
     pub fn set_pixel(&mut self, coords: (i32, i32), color: &Color) {
         // only draw pixel if it is in buffer bounds, will pass silently

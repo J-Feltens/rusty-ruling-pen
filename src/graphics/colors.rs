@@ -1,3 +1,5 @@
+use rand::Rng;
+
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Color {
     pub r: f64,
@@ -13,6 +15,16 @@ impl Color {
             g: (g),
             b: (b),
             a: (a),
+        }
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::rng();
+        Self {
+            r: rng.random::<f64>(),
+            g: rng.random::<f64>(),
+            b: rng.random::<f64>(),
+            a: 1.0, // you can pick another if you want
         }
     }
 
@@ -33,6 +45,10 @@ impl Color {
 
     pub fn as_f64_vec(self) -> Vec<f64> {
         return vec![self.r, self.g, self.b, self.a];
+    }
+
+    pub fn apply_lighting(&self, l: f64) -> Color {
+        Self::new(self.r * l, self.g * l, self.b * l, self.a)
     }
 }
 
