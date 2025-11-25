@@ -2,7 +2,6 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
-use crate::graphics::scanline::draw_polygon_onto_buffer;
 use crate::graphics::{Canvas, PointLight, SSAA};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
@@ -14,11 +13,11 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 256;
-const SIZE_Y: usize = 256;
+const SIZE_X: usize = 800;
+const SIZE_Y: usize = 800;
 const SIZE_X_HALF: usize = SIZE_X / 2;
 const SIZE_Y_HALF: usize = SIZE_Y / 2;
-const SCALE: minifb::Scale = minifb::Scale::X2;
+const SCALE: minifb::Scale = minifb::Scale::X1;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -66,7 +65,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 1.0, 64, 32, &Color::named_color("cyan"));
+    let torus = calc_torus(2.0, 1.0, 64 / 4, 32 / 4, &Color::named_color("cyan"));
 
     let mut triangles = vec![];
 
@@ -200,14 +199,16 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                 attrs[4] = normal_cam_space.x;
                 attrs[5] = normal_cam_space.y;
                 attrs[6] = normal_cam_space.z;
-                attrs[7] = triangle.color.r;
-                attrs[8] = triangle.color.g;
-                attrs[9] = triangle.color.b;
-                attrs[10] = triangle.color.a;
+                attrs[7] = *triangle.color.r();
+                attrs[8] = *triangle.color.g();
+                attrs[9] = *triangle.color.b();
+                attrs[10] = *triangle.color.a();
 
                 let ivec2 = IntegerVector2d::new(
-                    (vec3.x * SIZE_X_HALF as f64) as i32 + SIZE_X_HALF as i32,
-                    (vec3.y * SIZE_Y_HALF as f64) as i32 + SIZE_Y_HALF as i32,
+                    (vec3.x * canvas.size_x_supersized_half as f64) as i32
+                        + canvas.size_x_supersized_half as i32,
+                    (vec3.y * canvas.size_y_supersized_half as f64) as i32
+                        + canvas.size_y_supersized_half as i32,
                     attrs,
                 );
                 triangle_projected[i] = ivec2;
@@ -217,15 +218,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             if skip_triangle {
                 continue;
             }
-            draw_polygon_onto_buffer(
-                &triangle_projected,
-                &mut canvas,
-                &lights_cam_space_reallight,
-            );
+            canvas.draw_polygon_onto_buffer(&triangle_projected, &lights_cam_space_reallight);
         }
 
+        canvas.apply_ssaa();
+
         // update minifb with new buffer
-        window.update_with_buffer(&canvas.buffer, SIZE_X, SIZE_Y)?;
+        window.update_with_buffer(&canvas.buffer, canvas.size_x, canvas.size_y)?;
 
         // print statistics:
         let interval = global_timer.elapsed().as_millis();

@@ -1,6 +1,6 @@
 use crate::graphics::Triangle3d;
-use crate::vectors::Vector4d;
 use crate::vectors::matrices::Matrix4x4;
+use crate::vectors::{Vector3d, Vector4d};
 
 pub fn interpolate1d(mut start: f64, mut end: f64, factor: f64) -> f64 {
     assert!(factor >= 0.0 && factor <= 1.0, "Cannot clamp yet");
@@ -57,4 +57,12 @@ pub fn clamp(val: f64) -> f64 {
     } else {
         val
     }
+}
+
+pub fn u32_color_to_vector(color: u32) -> Vector3d {
+    Vector3d::new(
+        ((color >> 16) & 0xFF) as f64 / 255.0,
+        ((color >> 8) & 0xFF) as f64 / 255.0,
+        (color & 0xFF) as f64 / 255.0,
+    )
 }
