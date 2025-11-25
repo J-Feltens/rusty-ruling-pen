@@ -2,18 +2,37 @@ use core::f64;
 
 use crate::graphics::{Color, PointLight, alpha_blend};
 
+pub enum SSAA {
+    X1,
+    X4,
+    X16,
+}
+
 pub struct Canvas {
     pub size_x: usize,
     pub size_y: usize,
 
     pub buffer: Vec<u32>,
+    pub buffer_supersized: Vec<u32>,
     pub z_buffer: Vec<f64>,
     pub bg_color: Color,
     pub lights: Vec<PointLight>,
+
+    // for super-sample-anti-aliasing
+    pub ssaa: SSAA,
+    pub ssaa_fac: usize,
+    pub size_x_supersized: usize,
+    pub size_y_supersized: usize,
 }
 
 impl Canvas {
-    pub fn new(size_x: usize, size_y: usize, bg_color: Color) -> Canvas {
+    pub fn new(size_x: usize, size_y: usize, bg_color: Color, ssaa: SSAA) -> Canvas {
+        let ssaa_fac;
+        match ssaa {
+            SSAA::X1 => ssaa_fac = 1,
+            SSAA::X4 => ssaa_fac = 2,
+            SSAA::X16 => ssaa_fac = 4,
+        }
         Canvas {
             size_x: size_x,
             size_y: size_y,
@@ -22,6 +41,13 @@ impl Canvas {
             z_buffer: vec![f64::MAX; size_x * size_y],
             bg_color: bg_color,
             lights: vec![],
+
+            ssaa: ssaa,
+            ssaa_fac: ssaa_fac,
+            size_x_supersized: size_x * ssaa_fac,
+            size_y_supersized: size_y * ssaa_fac,
+
+            buffer_supersized: vec![bg_color.as_u32(); size_x * size_y * ssaa_fac * ssaa_fac],
         }
     }
 

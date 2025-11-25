@@ -3,7 +3,7 @@ use std::time::Instant;
 use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::scanline::draw_polygon_onto_buffer;
-use crate::graphics::{Canvas, PointLight};
+use crate::graphics::{Canvas, PointLight, SSAA};
 use crate::graphics::{Color, calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -14,11 +14,11 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 512;
-const SIZE_Y: usize = 512;
+const SIZE_X: usize = 256;
+const SIZE_Y: usize = 256;
 const SIZE_X_HALF: usize = SIZE_X / 2;
 const SIZE_Y_HALF: usize = SIZE_Y / 2;
-const SCALE: minifb::Scale = minifb::Scale::X1;
+const SCALE: minifb::Scale = minifb::Scale::X2;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"));
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"), SSAA::X4);
 
     // light
     let light = PointLight::new(
@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 1.0, 128 * 4, 64 * 4, &Color::named_color("cyan"));
+    let torus = calc_torus(2.0, 1.0, 64, 32, &Color::named_color("cyan"));
 
     let mut triangles = vec![];
 
