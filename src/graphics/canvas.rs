@@ -1,16 +1,29 @@
-use core::f64;
-
 use crate::graphics::colors::rgb2u32;
 use crate::graphics::fragment_shader::phong_frag;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTable, EdgeTableEntry};
 use crate::graphics::{Color, PointLight, alpha_blend};
 use crate::util::u32_color_to_vector;
-use crate::vectors::{IntegerVector2d, Vector3d};
+use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
+use core::f64;
+use std::fmt;
 
 pub enum SSAA {
     X1,
     X4,
     X16,
+    X32,
+}
+
+impl fmt::Display for SSAA {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SSAA::X1 => write!(f, "1X SSAA"),
+            SSAA::X4 => write!(f, "4X SSAA"),
+            SSAA::X16 => write!(f, "16X SSAA"),
+            SSAA::X32 => write!(f, "32X SSAA"),
+        }
+    }
 }
 
 pub struct Canvas {
@@ -39,6 +52,7 @@ impl Canvas {
             SSAA::X1 => ssaa_fac = 1,
             SSAA::X4 => ssaa_fac = 2,
             SSAA::X16 => ssaa_fac = 4,
+            SSAA::X32 => ssaa_fac = 8,
         }
         Canvas {
             size_x: size_x,
@@ -132,50 +146,22 @@ impl Canvas {
     pub fn apply_ssaa(&mut self) {
         for y in 0..self.size_y {
             for x in 0..self.size_x {
-                match self.ssaa {
-                    SSAA::X1 => {
-                        self.buffer[y * self.size_x + x] =
-                            self.buffer_supersized[y * self.size_x + x];
-                    }
-                    SSAA::X4 => {
-                        let c1 = u32_color_to_vector(
-                            self.buffer_supersized[(2 * y) * self.size_x_supersized + (2 * x)],
-                        );
-                        let c2 = u32_color_to_vector(
-                            self.buffer_supersized[(2 * y) * self.size_x_supersized + (2 * x + 1)],
-                        );
-                        let c3 = u32_color_to_vector(
-                            self.buffer_supersized[(2 * y + 1) * self.size_x_supersized + (2 * x)],
-                        );
-                        let c4 = u32_color_to_vector(
-                            self.buffer_supersized
-                                [(2 * y + 1) * self.size_x_supersized + (2 * x + 1)],
-                        );
-                        let mixed = (c1 + c2 + c3 + c4) * 0.25;
-                        self.buffer[y * self.size_x + x] = rgb2u32(
-                            (mixed.x * 255.0) as u8,
-                            (mixed.y * 255.0) as u8,
-                            (mixed.z * 255.0) as u8,
-                        );
-                    }
-                    SSAA::X16 => {
-                        let mut mixed = Vector3d::zero();
-                        for y_ in 0..4 {
-                            for x_ in 0..4 {
-                                mixed += u32_color_to_vector(
-                                    self.buffer_supersized
-                                        [(4 * y + y_) * self.size_x_supersized + (4 * x + x_)],
-                                );
-                            }
-                        }
-                        mixed /= 16.0;
-                        self.buffer[y * self.size_x + x] = rgb2u32(
-                            (mixed.x * 255.0) as u8,
-                            (mixed.y * 255.0) as u8,
-                            (mixed.z * 255.0) as u8,
+                let mut mixed = Vector3d::zero();
+                for y_ in 0..self.ssaa_fac {
+                    for x_ in 0..self.ssaa_fac {
+                        mixed += u32_color_to_vector(
+                            self.buffer_supersized[(self.ssaa_fac * y + y_)
+                                * self.size_x_supersized
+                                + (self.ssaa_fac * x + x_)],
                         );
                     }
                 }
+                mixed /= (self.ssaa_fac as f64 * self.ssaa_fac as f64);
+                self.buffer[y * self.size_x + x] = rgb2u32(
+                    (mixed.x * 255.0) as u8,
+                    (mixed.y * 255.0) as u8,
+                    (mixed.z * 255.0) as u8,
+                );
             }
         }
     }

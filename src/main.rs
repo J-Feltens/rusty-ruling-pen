@@ -13,11 +13,11 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 800;
-const SIZE_Y: usize = 800;
-const SIZE_X_HALF: usize = SIZE_X / 2;
-const SIZE_Y_HALF: usize = SIZE_Y / 2;
+const SIZE_X: usize = 300;
+const SIZE_Y: usize = 300;
 const SCALE: minifb::Scale = minifb::Scale::X1;
+const SSAA: SSAA = SSAA::X4;
+const TORUS_RESOLUTION: usize = 64;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"), SSAA::X4);
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"), SSAA);
 
     // light
     let light = PointLight::new(
@@ -65,7 +65,13 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
-    let torus = calc_torus(2.0, 1.0, 64 / 4, 32 / 4, &Color::named_color("cyan"));
+    let torus = calc_torus(
+        2.0,
+        1.0,
+        TORUS_RESOLUTION * 2,
+        TORUS_RESOLUTION,
+        &Color::named_color("cyan"),
+    );
 
     let mut triangles = vec![];
 
