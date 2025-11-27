@@ -49,16 +49,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA);
 
-    // light
-    let (deg_0, deg_60, deg_120, deg_180, deg_240, deg_300) = (
-        0.0f64,
-        PI * 1.0 / 3.0,
-        PI * 2.0 / 3.0,
-        PI * 3.0 / 3.0,
-        PI * 4.0 / 3.0,
-        PI * 5.0 / 3.0,
-    );
-
+    // lighting
     let light_array_radius = 6.0;
     let light_array_z = 3.0;
     let light_array_strength = 1.0;

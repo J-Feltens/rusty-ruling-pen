@@ -2,7 +2,6 @@ use crate::graphics::Triangle3d;
 use crate::graphics::colors::named_color;
 use crate::util::linspace;
 use crate::vectors::{Matrix3x3, Vector3d, Vector4d};
-use image::error::UnsupportedErrorKind::Color;
 use std::f64::consts::PI;
 
 pub fn calc_cube(cube_size: f64, center: Vector3d) -> Vec<Triangle3d> {
@@ -98,7 +97,7 @@ pub fn calc_sphere(
     color: &Vector4d,
 ) -> Vec<Triangle3d> {
     let phis = linspace(0.0, 2.0 * PI, resolution);
-    let mut thetas = linspace(0.0, PI, resolution);
+    let thetas = linspace(0.0, PI, resolution);
 
     let mut vertices = vec![Vector3d::zero(); resolution * resolution];
     for phi_idx in 0..resolution {

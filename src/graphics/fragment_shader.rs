@@ -1,6 +1,5 @@
 use crate::graphics::PointLight;
 use crate::graphics::colors::apply_colored_lighting;
-use crate::util::clamp;
 use crate::vectors::{Vector3d, Vector4d};
 
 pub fn phong_frag(
@@ -36,7 +35,7 @@ pub fn phong_frag(
 
         // diffuse
         let l_diff = light.strength * n_dot_l * diffuse_fac;
-        lighting_total += (light.emission * l_diff);
+        lighting_total += light.emission * l_diff;
 
         // specular
         let r = n * n_dot_l * 2.0 - l;

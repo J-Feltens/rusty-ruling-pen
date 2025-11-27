@@ -1,6 +1,4 @@
-use crate::graphics::colors::{
-    color_vec_from_f64, color_vec_from_u32, color_vec_to_u32, rgb_f64_to_u32,
-};
+use crate::graphics::colors::{color_vec_from_f64, color_vec_from_u32, color_vec_to_u32};
 use crate::graphics::fragment_shader::phong_frag;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTable, EdgeTableEntry};
 use crate::graphics::{PointLight, alpha_blend};
@@ -158,7 +156,7 @@ impl Canvas {
                         );
                     }
                 }
-                mixed /= (self.ssaa_fac as f64 * self.ssaa_fac as f64);
+                mixed /= self.ssaa_fac as f64 * self.ssaa_fac as f64;
                 self.buffer[y * self.size_x + x] = color_vec_to_u32(&mixed);
             }
         }
@@ -249,7 +247,6 @@ impl Canvas {
             active_edge_table.sort();
         }
 
-        let mut iteration = 0;
         while edge_table.list.len() > 0 || active_edge_table.list.len() > 0 {
             // remove all edges from AET wich are entirely below y_scan
             while let Some(index) = active_edge_table
@@ -339,8 +336,6 @@ impl Canvas {
 
             // increment y_scan
             y_scan += 1;
-
-            iteration += 1;
         }
     }
 }
