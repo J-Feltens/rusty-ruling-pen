@@ -2,9 +2,9 @@
 
 ### A simple render engine written solely in rust.
 
-This is first and foremost a passion project. When I started out, my main goal was to learn Rust, and it still is. In an
+This is first and foremost a passion project. When I started out, my main goal was to learn rust, and it still is. In an
 attempt to get a better grasp
-both of Rust and computer graphics, I
+both of the language and the algorithms involved with computer graphics, I
 implemented almost all data structures, algorithms and vector arithmetic myself. This has been... somewhat successful.
 
 ![img.png](demo.png)
