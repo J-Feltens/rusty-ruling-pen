@@ -18,7 +18,7 @@ const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const SSAA: SSAA = SSAA::X32;
-const SHAPE_RESOLUTION: usize = 256;
+const SHAPE_RESOLUTION: usize = 8;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -101,7 +101,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;
-    let angle_increment: f64 = 0.05;
+    let angle_increment: f64 = PI / 16.0;
     let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
     let mut camera_theta: f64 = 0.7;
