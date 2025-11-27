@@ -17,8 +17,8 @@ pub mod vectors;
 const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X1;
-const SHAPE_RESOLUTION: usize = 16;
+const SSAA: SSAA = SSAA::X32;
+const SHAPE_RESOLUTION: usize = 256;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -59,42 +59,21 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         PI * 5.0 / 3.0,
     );
 
-    let light = PointLight::new(
-        Vector3d::new(deg_0.cos() * 5.0, deg_0.sin() * 5.0, 3.0),
-        1.0,
-        named_color("red"),
-    );
-    let light2 = PointLight::new(
-        Vector3d::new(deg_120.cos() * 5.0, deg_120.sin() * 5.0, 3.0),
-        1.0,
-        named_color("green"),
-    );
-    let light3 = PointLight::new(
-        Vector3d::new(deg_240.cos() * 5.0, deg_240.sin() * 5.0, 3.0),
-        1.0,
-        named_color("blue"),
-    );
-    let light4 = PointLight::new(
-        Vector3d::new(deg_60.cos() * 5.0, deg_60.sin() * 5.0, -3.0),
-        1.0,
-        named_color("yellow"),
-    );
-    let light5 = PointLight::new(
-        Vector3d::new(deg_180.cos() * 5.0, deg_180.sin() * 5.0, -3.0),
-        1.0,
-        named_color("cyan"),
-    );
-    let light6 = PointLight::new(
-        Vector3d::new(deg_300.cos() * 5.0, deg_300.sin() * 5.0, -3.0),
-        1.0,
-        named_color("magenta"),
-    );
-    canvas.add_point_light(light);
-    canvas.add_point_light(light2);
-    canvas.add_point_light(light3);
-    canvas.add_point_light(light4);
-    canvas.add_point_light(light5);
-    canvas.add_point_light(light6);
+    let light_array_radius = 6.0;
+    let light_array_z = 3.0;
+    let light_array_strength = 1.0;
+    let light_colors = vec!["red", "yellow", "green", "cyan", "blue", "magenta"];
+    for i in 0..6 {
+        canvas.add_point_light(PointLight::new(
+            Vector3d::new(
+                (PI * i as f64 / 3.0).cos() * light_array_radius,
+                (PI * i as f64 / 3.0).sin() * light_array_radius,
+                if i % 2 == 0 { 1.0 } else { -1.0 } * light_array_z,
+            ),
+            light_array_strength,
+            named_color(light_colors[i]),
+        ));
+    }
 
     let mut triangles = vec![];
     // cube
@@ -102,22 +81,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
     let torus = calc_torus(
         Vector3d::zero(),
-        2.2,
-        1.0,
+        2.7,
+        1.2,
         SHAPE_RESOLUTION * 2,
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
     let sphere = calc_sphere(
         Vector3d::zero(),
-        3.0,
+        1.2,
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
 
     // triangles.append(&mut (cube.clone()));
     // triangles.append(&mut (cube2.clone()));
-    // triangles.append(&mut (torus.clone()));
+    triangles.append(&mut (torus.clone()));
     triangles.append(&mut (sphere.clone()));
 
     // spherical coords for simple camera movement
@@ -125,7 +104,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let angle_increment: f64 = 0.05;
     let radius_increment: f64 = 0.3;
     let mut camera_phi: f64 = 0.0;
-    let mut camera_theta: f64 = 0.8;
+    let mut camera_theta: f64 = 0.7;
 
     // projection stuff
     let l = -2.0;

@@ -20,10 +20,10 @@ pub fn phong_frag(
     */
 
     // Phong
-    let ambient = 0.1;
+    let ambient = 0.01;
     let diffuse_fac = 0.7;
     let specular_fac = 1.0;
-    let shinyness = 100.0;
+    let shinyness: i32 = 300;
 
     let mut lighting_total = Vector4d::ones() * ambient;
 
@@ -41,7 +41,7 @@ pub fn phong_frag(
         // specular
         let r = n * n_dot_l * 2.0 - l;
         let v_dot_r = v.dot(r);
-        let l_spec = light.strength * v_dot_r.powf(shinyness) * specular_fac;
+        let l_spec = light.strength * v_dot_r.powi(shinyness) * specular_fac;
 
         lighting_total += light.emission * l_spec;
     }
