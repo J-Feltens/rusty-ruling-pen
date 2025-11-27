@@ -23,12 +23,21 @@ impl Vector4d {
         return Self::new(vector.x, vector.y, vector.z, u);
     }
 
-    pub fn zero() -> Self {
+    pub fn zeros() -> Self {
         Self {
             x: (0.0),
             y: (0.0),
             z: (0.0),
             u: (0.0),
+        }
+    }
+
+    pub fn ones() -> Self {
+        Self {
+            x: (1.0),
+            y: (1.0),
+            z: (1.0),
+            u: (1.0),
         }
     }
 

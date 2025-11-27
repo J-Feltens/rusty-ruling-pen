@@ -10,5 +10,5 @@ pub mod triangles;
 pub use canvas::{Canvas, SSAA};
 pub use colors::alpha_blend;
 pub use lighting::PointLight;
-pub use shapes::{calc_cube, calc_torus};
+pub use shapes::{calc_cube, calc_sphere, calc_torus};
 pub use triangles::Triangle3d;

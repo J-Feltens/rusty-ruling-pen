@@ -79,15 +79,13 @@ impl Canvas {
     }
 
     pub fn reset(&mut self) {
-        self.buffer = vec![color_vec_to_u32(&self.bg_color); self.size_x * self.size_y];
-        self.buffer_supersized =
-            vec![color_vec_to_u32(&self.bg_color); self.size_x_supersized * self.size_y_supersized];
+        self.buffer.fill(color_vec_to_u32(&self.bg_color));
+        self.buffer_supersized
+            .fill(color_vec_to_u32(&self.bg_color));
     }
 
     pub fn reset_z_buffer(&mut self) {
-        for i in 0..self.z_buffer_supersized.len() {
-            self.z_buffer_supersized[i] = f64::MAX;
-        }
+        self.z_buffer_supersized.fill(f64::MAX);
     }
 
     pub fn integer_coords_in_canvas(&self, x: i32, y: i32) -> bool {
@@ -150,7 +148,7 @@ impl Canvas {
     pub fn apply_ssaa(&mut self) {
         for y in 0..self.size_y {
             for x in 0..self.size_x {
-                let mut mixed = Vector4d::zero();
+                let mut mixed = Vector4d::zeros();
                 for y_ in 0..self.ssaa_fac {
                     for x_ in 0..self.ssaa_fac {
                         mixed += color_vec_from_u32(

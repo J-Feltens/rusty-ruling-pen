@@ -47,6 +47,7 @@ pub fn calc_cube(cube_size: f64, center: Vector3d) -> Vec<Triangle3d> {
 }
 //
 pub fn calc_torus(
+    origin: Vector3d,
     major_radius: f64,
     minor_radius: f64,
     major_resolution: usize,
@@ -66,7 +67,7 @@ pub fn calc_torus(
                 minor_radius * thetas[minor].sin(),
             );
             new_vec = rot_mat.times_vec(new_vec);
-            vertices.push(new_vec);
+            vertices.push(new_vec + origin);
         }
     }
 
@@ -87,5 +88,53 @@ pub fn calc_torus(
             triangles.push(Triangle3d::new(p2, p3, p4, &color));
         }
     }
+    return triangles;
+}
+
+pub fn calc_sphere(
+    origin: Vector3d,
+    radius: f64,
+    resolution: usize,
+    color: &Vector4d,
+) -> Vec<Triangle3d> {
+    let phis = linspace(0.0, 2.0 * PI, resolution);
+    let thetas = linspace(0.0, PI, resolution);
+
+    let mut vertices = vec![Vector3d::zero(); resolution * resolution];
+    for phi_idx in 0..resolution {
+        for theta_idx in 0..resolution {
+            let cos_phi = phis[phi_idx].cos();
+            let sin_phi = phis[phi_idx].sin();
+            let cos_theta = thetas[theta_idx].cos();
+            let sin_theta = thetas[theta_idx].sin();
+            vertices[phi_idx * resolution + theta_idx] = Vector3d::new(
+                radius * sin_theta * cos_phi,
+                radius * sin_theta * sin_phi,
+                radius * cos_theta,
+            ) + origin;
+        }
+    }
+
+    let mut triangles = vec![];
+    for phi_idx in 0..resolution {
+        for theta_idx in 0..resolution - 1 {
+            if theta_idx >= 1 && theta_idx < resolution - 1 {
+                let (p1, p2, p3, p4) = (
+                    vertices[phi_idx * resolution + theta_idx],
+                    vertices[phi_idx * resolution + theta_idx + 1],
+                    vertices[((phi_idx + 1) % resolution) * resolution + theta_idx],
+                    vertices[((phi_idx + 1) % resolution) * resolution + theta_idx + 1],
+                );
+                triangles.push(Triangle3d::new(p1, p2, p3, color));
+                triangles.push(Triangle3d::new(p2, p4, p3, color));
+            }
+        }
+    }
+
+    // add lid and bottom
+    let topmost = vertices[0];
+    let bottom_most = vertices[resolution - 1];
+    for phi in 0..resolution {}
+
     return triangles;
 }

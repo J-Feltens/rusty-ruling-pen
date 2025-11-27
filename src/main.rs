@@ -3,7 +3,7 @@ use std::time::Instant;
 use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::colors::named_color;
-use crate::graphics::{Canvas, PointLight, SSAA};
+use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere};
 use crate::graphics::{calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
@@ -14,11 +14,11 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 300;
-const SIZE_Y: usize = 300;
+const SIZE_X: usize = 500;
+const SIZE_Y: usize = 500;
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const SSAA: SSAA = SSAA::X4;
-const TORUS_RESOLUTION: usize = 64;
+const SHAPE_RESOLUTION: usize = 256;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA);
 
     // light
-    let light = PointLight::new(Vector3d::new(1.0, 3.0, 5.0), 0.8, named_color("white"));
+    let light = PointLight::new(Vector3d::new(-1.0, -4.0, 5.0), 0.8, named_color("white"));
     let light2 = PointLight::new(Vector3d::new(3.0, -8.0, -2.0), 0.2, named_color("yellow"));
     canvas.add_point_light(light);
     canvas.add_point_light(light2);
@@ -59,10 +59,17 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
     let torus = calc_torus(
+        Vector3d::zero(),
         2.0,
         1.0,
-        TORUS_RESOLUTION * 2,
-        TORUS_RESOLUTION,
+        SHAPE_RESOLUTION * 2,
+        SHAPE_RESOLUTION,
+        &named_color("cyan"),
+    );
+    let sphere = calc_sphere(
+        Vector3d::zero(),
+        3.0,
+        SHAPE_RESOLUTION,
         &named_color("cyan"),
     );
 
@@ -71,6 +78,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     triangles.append(&mut (torus.clone()));
     // triangles.append(&mut (cube.clone()));
     // triangles.append(&mut (cube2.clone()));
+    // triangles.append(&mut (sphere.clone()));
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;
@@ -227,11 +235,16 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         // print statistics:
         let interval = global_timer.elapsed().as_millis();
+        println!("{} FPS", 1.0 / (interval as f64 / 1000.0));
+        println!("Rendertime: {} ms", interval,);
+        println!("Render config:");
         println!(
-            "Rendertime: {} ms ({} fps)",
-            interval,
-            1.0 / (interval as f64 / 1000.0)
+            "  Image size: {}x{} pixels, {} pixels in total",
+            canvas.size_x,
+            canvas.size_y,
+            canvas.buffer.len()
         );
+        println!("  Antialiasing: {}", canvas.ssaa);
         global_timer = Instant::now();
         // thread::sleep(ANIM_INTERVAL);
     }
