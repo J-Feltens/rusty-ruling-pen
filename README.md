@@ -32,7 +32,7 @@ implemented almost all data structures, algorithms and vector arithmetic myself.
     - housing shell for 3 vertices
     - on creation, computes surface normal
     - vertex-order determines surface normal
-      -fields:
+    - fields:
         - vertices: Vec<Vector3d>
         - n: Vector3d
         - color: Color
