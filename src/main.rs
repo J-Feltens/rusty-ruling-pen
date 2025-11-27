@@ -17,7 +17,7 @@ pub mod vectors;
 const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X32;
+const SSAA: SSAA = SSAA::X64;
 const SHAPE_RESOLUTION: usize = 256;
 
 // fn main() {
@@ -63,6 +63,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let light_array_z = 3.0;
     let light_array_strength = 1.0;
     let light_colors = vec!["red", "yellow", "green", "cyan", "blue", "magenta"];
+    let light_colors = vec!["red", "yellow", "green", "cyan", "blue", "magenta"];
     for i in 0..6 {
         canvas.add_point_light(PointLight::new(
             Vector3d::new(
@@ -103,7 +104,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut gimbal_radius: f64 = 30.0;
     let angle_increment: f64 = PI / 16.0;
     let radius_increment: f64 = 0.3;
-    let mut camera_phi: f64 = 0.0;
+    let mut camera_phi: f64 = 31.0 * 2.0 * PI / 32.0;
     let mut camera_theta: f64 = 0.7;
 
     // projection stuff

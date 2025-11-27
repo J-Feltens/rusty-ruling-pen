@@ -12,7 +12,7 @@ pub enum SSAA {
     X1,
     X4,
     X16,
-    X32,
+    X64,
 }
 
 impl fmt::Display for SSAA {
@@ -22,7 +22,7 @@ impl fmt::Display for SSAA {
             SSAA::X1 => write!(f, "1X SSAA"),
             SSAA::X4 => write!(f, "4X SSAA"),
             SSAA::X16 => write!(f, "16X SSAA"),
-            SSAA::X32 => write!(f, "32X SSAA"),
+            SSAA::X64 => write!(f, "32X SSAA"),
         }
     }
 }
@@ -53,7 +53,7 @@ impl Canvas {
             SSAA::X1 => ssaa_fac = 1,
             SSAA::X4 => ssaa_fac = 2,
             SSAA::X16 => ssaa_fac = 4,
-            SSAA::X32 => ssaa_fac = 8,
+            SSAA::X64 => ssaa_fac = 8,
         }
         Canvas {
             size_x: size_x,

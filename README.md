@@ -52,5 +52,5 @@ implemented almost all data structures, algorithms and vector arithmetic myself.
     - during rasterization attrs are interpolated
     - z-buffer for handeling intersecting faces/general z-order
 - anti-aliasing:
-    - features up to 32x super sampling anti-aliasing
+    - features up to 64x super sampling anti-aliasing
     - since the entire application is single-threaded on CPU, the SSAA is... very, _very_ slow
