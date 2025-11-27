@@ -1,4 +1,4 @@
-use crate::{graphics::Color, vectors::Vector3d};
+use crate::vectors::{Vector3d, Vector4d};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -6,11 +6,11 @@ pub struct Triangle3d {
     pub vertices: Vec<Vector3d>,
     pub normal: Vector3d,
 
-    pub color: Color,
+    pub color: Vector4d,
 }
 
 impl Triangle3d {
-    pub fn new(p1: Vector3d, p2: Vector3d, p3: Vector3d, color: &Color) -> Self {
+    pub fn new(p1: Vector3d, p2: Vector3d, p3: Vector3d, color: &Vector4d) -> Self {
         Self {
             vertices: vec![p1, p2, p3],
             normal: (p2 - p1).cross(p3 - p1).normalize(),

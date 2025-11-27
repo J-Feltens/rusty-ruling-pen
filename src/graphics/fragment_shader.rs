@@ -1,14 +1,15 @@
-use crate::graphics::{Color, PointLight};
+use crate::graphics::PointLight;
+use crate::graphics::colors::apply_colored_lighting;
 use crate::util::clamp;
-use crate::vectors::Vector3d;
+use crate::vectors::{Vector3d, Vector4d};
 
 pub fn phong_frag(
     x: Vector3d,
     n: Vector3d,
     v: Vector3d,
-    color: Color,
+    color: Vector4d,
     lights: &Vec<PointLight>,
-) -> Color {
+) -> Vector4d {
     /*
         with
             x:          surface position in camera space
@@ -19,33 +20,31 @@ pub fn phong_frag(
     */
 
     // Phong
-    let ambient = 0.05;
-    let diffuse_fac = 0.5;
-    let specular_fac = 0.9;
-    let shinyness = 100.0;
+    let ambient = 0.01;
+    let diffuse_fac = 0.7;
+    let specular_fac = 1.0;
+    let shinyness: i32 = 300;
 
-    let mut r_total = ambient;
-    let mut g_total = ambient;
-    let mut b_total = ambient;
+    let mut lighting_total = Vector4d::ones() * ambient;
 
     for light in lights {
         let l = (light.pos - x).normalize();
+        let n_dot_l = n.dot(l);
+        if n_dot_l <= 0.0 {
+            continue;
+        }
 
         // diffuse
-        let n_dot_l = clamp(n.dot(l));
         let l_diff = light.strength * n_dot_l * diffuse_fac;
-        r_total += l_diff * light.emission.r;
-        g_total += l_diff * light.emission.g;
-        b_total += l_diff * light.emission.b;
+        lighting_total += (light.emission * l_diff);
 
         // specular
         let r = n * n_dot_l * 2.0 - l;
-        let l_spec = light.strength * v.dot(r).powf(shinyness) * specular_fac;
+        let v_dot_r = v.dot(r);
+        let l_spec = light.strength * v_dot_r.powi(shinyness) * specular_fac;
 
-        r_total += l_spec * light.emission.r;
-        g_total += l_spec * light.emission.g;
-        b_total += l_spec * light.emission.b;
+        lighting_total += light.emission * l_spec;
     }
 
-    return color.apply_colored_lighting(r_total, g_total, b_total);
+    return apply_colored_lighting(&color, &lighting_total);
 }

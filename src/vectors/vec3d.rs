@@ -42,6 +42,7 @@ impl Vector3d {
         let len = self.length().abs();
         if len == 0.0 {
             panic!("Trying to normalize a vector with length zero!!");
+            return Self::zero();
         } else {
             return Self {
                 x: self.x / len,

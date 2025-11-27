@@ -1,5 +1,12 @@
 # rusty-ruling-pen
 
+This is first and foremost a passion project. When I started out, my main goal was to learn Rust, and it still is. In an
+attempt to get a better grasp
+both of Rust and computer graphics, I
+implemented almost all data structures, algorithms and vector arithmetic myself. This has been... somewhat successful.
+
+![img.png](demo.png)
+
 ## Data structures:
 
 - Vector2d, -3d, -4d
@@ -33,11 +40,7 @@
 ## Render Pipeline:
 
 - shapes are represented by a Vec\<Triangle3d>
-- a Triangle3d object consists of:
-    - 3 vertices (Vector3d)
-    - surface normal (Vector3d)
-    - color (Color)
-      additional features like an attribute vector (Vec<f64>) to store vertex attributes
+- colors are represented by a Vector4d with the attribute "u" used as alpha channel
 - projection
     - projection from 3d to 2d is done using a 4x4 homogenous perspective-projection-matrix
     - during projection, the surface normal and color and projected z of a triangle are transferred into the attrs
@@ -46,3 +49,6 @@
     - rasterization is done using scanline algorithm
     - during rasterization attrs are interpolated
     - z-buffer for handeling intersecting faces/general z-order
+- anti-aliasing:
+    - features up to 32x super sampling anti-aliasing
+    - since the entire application is single-threaded on CPU, the SSAA is... very, _very_ slow
