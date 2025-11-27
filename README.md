@@ -1,5 +1,7 @@
 # rusty-ruling-pen
 
+### A simple render engine written solely in rust.
+
 This is first and foremost a passion project. When I started out, my main goal was to learn Rust, and it still is. In an
 attempt to get a better grasp
 both of Rust and computer graphics, I

@@ -18,7 +18,7 @@ const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const SSAA: SSAA = SSAA::X32;
-const SHAPE_RESOLUTION: usize = 8;
+const SHAPE_RESOLUTION: usize = 256;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
