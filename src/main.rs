@@ -14,11 +14,11 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 500;
-const SIZE_Y: usize = 500;
+const SIZE_X: usize = 800;
+const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X4;
-const SHAPE_RESOLUTION: usize = 256;
+const SSAA: SSAA = SSAA::X1;
+const SHAPE_RESOLUTION: usize = 16;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -50,35 +50,75 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA);
 
     // light
-    let light = PointLight::new(Vector3d::new(-1.0, -4.0, 5.0), 0.8, named_color("white"));
-    let light2 = PointLight::new(Vector3d::new(3.0, -8.0, -2.0), 0.2, named_color("yellow"));
+    let (deg_0, deg_60, deg_120, deg_180, deg_240, deg_300) = (
+        0.0f64,
+        PI * 1.0 / 3.0,
+        PI * 2.0 / 3.0,
+        PI * 3.0 / 3.0,
+        PI * 4.0 / 3.0,
+        PI * 5.0 / 3.0,
+    );
+
+    let light = PointLight::new(
+        Vector3d::new(deg_0.cos() * 5.0, deg_0.sin() * 5.0, 3.0),
+        1.0,
+        named_color("red"),
+    );
+    let light2 = PointLight::new(
+        Vector3d::new(deg_120.cos() * 5.0, deg_120.sin() * 5.0, 3.0),
+        1.0,
+        named_color("green"),
+    );
+    let light3 = PointLight::new(
+        Vector3d::new(deg_240.cos() * 5.0, deg_240.sin() * 5.0, 3.0),
+        1.0,
+        named_color("blue"),
+    );
+    let light4 = PointLight::new(
+        Vector3d::new(deg_60.cos() * 5.0, deg_60.sin() * 5.0, -3.0),
+        1.0,
+        named_color("yellow"),
+    );
+    let light5 = PointLight::new(
+        Vector3d::new(deg_180.cos() * 5.0, deg_180.sin() * 5.0, -3.0),
+        1.0,
+        named_color("cyan"),
+    );
+    let light6 = PointLight::new(
+        Vector3d::new(deg_300.cos() * 5.0, deg_300.sin() * 5.0, -3.0),
+        1.0,
+        named_color("magenta"),
+    );
     canvas.add_point_light(light);
     canvas.add_point_light(light2);
+    canvas.add_point_light(light3);
+    canvas.add_point_light(light4);
+    canvas.add_point_light(light5);
+    canvas.add_point_light(light6);
 
+    let mut triangles = vec![];
     // cube
     let cube = calc_cube(2.0, Vector3d::zero());
     let cube2 = calc_cube(2.0, Vector3d::new(1.0, 1.0, 1.0));
     let torus = calc_torus(
         Vector3d::zero(),
-        2.0,
+        2.2,
         1.0,
         SHAPE_RESOLUTION * 2,
         SHAPE_RESOLUTION,
-        &named_color("cyan"),
+        &named_color("white"),
     );
     let sphere = calc_sphere(
         Vector3d::zero(),
         3.0,
         SHAPE_RESOLUTION,
-        &named_color("cyan"),
+        &named_color("white"),
     );
 
-    let mut triangles = vec![];
-
-    triangles.append(&mut (torus.clone()));
     // triangles.append(&mut (cube.clone()));
     // triangles.append(&mut (cube2.clone()));
-    // triangles.append(&mut (sphere.clone()));
+    // triangles.append(&mut (torus.clone()));
+    triangles.append(&mut (sphere.clone()));
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;

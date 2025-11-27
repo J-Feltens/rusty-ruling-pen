@@ -98,7 +98,7 @@ pub fn calc_sphere(
     color: &Vector4d,
 ) -> Vec<Triangle3d> {
     let phis = linspace(0.0, 2.0 * PI, resolution);
-    let thetas = linspace(0.0, PI, resolution);
+    let mut thetas = linspace(0.0, PI, resolution);
 
     let mut vertices = vec![Vector3d::zero(); resolution * resolution];
     for phi_idx in 0..resolution {
@@ -118,7 +118,14 @@ pub fn calc_sphere(
     let mut triangles = vec![];
     for phi_idx in 0..resolution {
         for theta_idx in 0..resolution - 1 {
-            if theta_idx >= 1 && theta_idx < resolution - 1 {
+            if theta_idx == 0 {
+                let (p1, p2, p3) = (
+                    vertices[phi_idx * resolution + theta_idx],
+                    vertices[phi_idx * resolution + theta_idx + 1],
+                    vertices[((phi_idx + 1) % resolution) * resolution + theta_idx + 1],
+                );
+                triangles.push(Triangle3d::new(p1, p2, p3, color));
+            } else {
                 let (p1, p2, p3, p4) = (
                     vertices[phi_idx * resolution + theta_idx],
                     vertices[phi_idx * resolution + theta_idx + 1],
@@ -131,10 +138,15 @@ pub fn calc_sphere(
         }
     }
 
-    // add lid and bottom
-    let topmost = vertices[0];
-    let bottom_most = vertices[resolution - 1];
-    for phi in 0..resolution {}
-
+    // add bottom most tris
+    let bottom_vertex = origin - Vector3d::new(0.0, 0.0, radius);
+    for phi_idx in 0..resolution {
+        let (p1, p2, p3) = (
+            vertices[phi_idx * resolution + resolution - 1],
+            vertices[((phi_idx + 1) % resolution) * resolution + resolution - 1],
+            bottom_vertex,
+        );
+        triangles.push(Triangle3d::new(p1, p3, p2, color));
+    }
     return triangles;
 }
