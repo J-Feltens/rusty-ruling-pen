@@ -1,8 +1,9 @@
-use crate::graphics::colors::rgb2u32;
+use crate::graphics::colors::{
+    color_vec_from_f64, color_vec_from_u32, color_vec_to_u32, rgb_f64_to_u32,
+};
 use crate::graphics::fragment_shader::phong_frag;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTable, EdgeTableEntry};
-use crate::graphics::{Color, PointLight, alpha_blend};
-use crate::util::u32_color_to_vector;
+use crate::graphics::{PointLight, alpha_blend};
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use core::f64;
 use std::fmt;
@@ -33,7 +34,7 @@ pub struct Canvas {
     pub buffer: Vec<u32>,
     pub buffer_supersized: Vec<u32>,
     pub z_buffer_supersized: Vec<f64>,
-    pub bg_color: Color,
+    pub bg_color: Vector4d,
     pub lights: Vec<PointLight>,
 
     // for super-sample-anti-aliasing
@@ -46,7 +47,7 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(size_x: usize, size_y: usize, bg_color: Color, ssaa: SSAA) -> Canvas {
+    pub fn new(size_x: usize, size_y: usize, bg_color: Vector4d, ssaa: SSAA) -> Canvas {
         let ssaa_fac;
         match ssaa {
             SSAA::X1 => ssaa_fac = 1,
@@ -58,7 +59,7 @@ impl Canvas {
             size_x: size_x,
             size_y: size_y,
 
-            buffer: vec![bg_color.as_u32(); size_x * size_y],
+            buffer: vec![color_vec_to_u32(&bg_color); size_x * size_y],
             bg_color: bg_color,
             lights: vec![],
 
@@ -70,14 +71,17 @@ impl Canvas {
             size_y_supersized_half: size_y * ssaa_fac / 2,
 
             z_buffer_supersized: vec![f64::MAX; size_x * size_y * ssaa_fac * ssaa_fac],
-            buffer_supersized: vec![bg_color.as_u32(); size_x * size_y * ssaa_fac * ssaa_fac],
+            buffer_supersized: vec![
+                color_vec_to_u32(&bg_color);
+                size_x * size_y * ssaa_fac * ssaa_fac
+            ],
         }
     }
 
     pub fn reset(&mut self) {
-        self.buffer = vec![self.bg_color.as_u32(); self.size_x * self.size_y];
+        self.buffer = vec![color_vec_to_u32(&self.bg_color); self.size_x * self.size_y];
         self.buffer_supersized =
-            vec![self.bg_color.as_u32(); self.size_x_supersized * self.size_y_supersized];
+            vec![color_vec_to_u32(&self.bg_color); self.size_x_supersized * self.size_y_supersized];
     }
 
     pub fn reset_z_buffer(&mut self) {
@@ -97,24 +101,24 @@ impl Canvas {
         self.lights.push(light);
     }
 
-    pub fn set_pixel(&mut self, coords: (i32, i32), color: &Color) {
+    pub fn set_pixel(&mut self, coords: (i32, i32), color: &Vector4d) {
         // only draw pixel if it is in buffer bounds, will pass silently
         if self.integer_coords_in_canvas(coords.0, coords.1) {
             let integer_coord_in_buffer = ((self.size_y_supersized as i32 - 1 - coords.1)
                 * self.size_x_supersized as i32
                 + coords.0) as usize;
 
-            let color_from = &Color::from_u32(self.buffer_supersized[integer_coord_in_buffer]);
+            let color_from = &color_vec_from_u32(self.buffer_supersized[integer_coord_in_buffer]);
 
             // alpha-blend
             self.buffer_supersized[integer_coord_in_buffer] =
-                alpha_blend(color_from, &color).as_u32();
+                color_vec_to_u32(&alpha_blend(color_from, &color));
         } else {
             println!("Drawing outside of canvas!");
         }
     }
 
-    pub fn set_pixel_with_z(&mut self, coords: (i32, i32), z: f64, color: &Color) {
+    pub fn set_pixel_with_z(&mut self, coords: (i32, i32), z: f64, color: &Vector4d) {
         // only draw pixel if it is in buffer bounds, will pass silently
         if self.integer_coords_in_canvas(coords.0, coords.1) {
             let integer_coord_in_buffer = ((self.size_x_supersized as i32 - 1 - coords.1)
@@ -146,10 +150,10 @@ impl Canvas {
     pub fn apply_ssaa(&mut self) {
         for y in 0..self.size_y {
             for x in 0..self.size_x {
-                let mut mixed = Vector3d::zero();
+                let mut mixed = Vector4d::zero();
                 for y_ in 0..self.ssaa_fac {
                     for x_ in 0..self.ssaa_fac {
-                        mixed += u32_color_to_vector(
+                        mixed += color_vec_from_u32(
                             self.buffer_supersized[(self.ssaa_fac * y + y_)
                                 * self.size_x_supersized
                                 + (self.ssaa_fac * x + x_)],
@@ -157,11 +161,7 @@ impl Canvas {
                     }
                 }
                 mixed /= (self.ssaa_fac as f64 * self.ssaa_fac as f64);
-                self.buffer[y * self.size_x + x] = rgb2u32(
-                    (mixed.x * 255.0) as u8,
-                    (mixed.y * 255.0) as u8,
-                    (mixed.z * 255.0) as u8,
-                );
+                self.buffer[y * self.size_x + x] = color_vec_to_u32(&mixed);
             }
         }
     }
@@ -306,8 +306,12 @@ impl Canvas {
                     while cur_x <= edge2.x_intersect {
                         // call fragment shader
                         let z_projected = cur_attrs[3];
-                        let color =
-                            Color::new(cur_attrs[7], cur_attrs[8], cur_attrs[9], cur_attrs[10]);
+                        let color = color_vec_from_f64(
+                            cur_attrs[7],
+                            cur_attrs[8],
+                            cur_attrs[9],
+                            cur_attrs[10],
+                        );
                         let x = Vector3d::new(cur_attrs[0], cur_attrs[1], cur_attrs[2]);
                         let n = Vector3d::new(cur_attrs[4], cur_attrs[5], cur_attrs[6]).normalize();
                         // let l = (light_cam_space - x).normalize();

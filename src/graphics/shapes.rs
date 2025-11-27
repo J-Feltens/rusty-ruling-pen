@@ -1,16 +1,18 @@
-use crate::graphics::{Color, Triangle3d};
+use crate::graphics::Triangle3d;
+use crate::graphics::colors::named_color;
 use crate::util::linspace;
-use crate::vectors::{Matrix3x3, Vector3d};
+use crate::vectors::{Matrix3x3, Vector3d, Vector4d};
+use image::error::UnsupportedErrorKind::Color;
 use std::f64::consts::PI;
 
 pub fn calc_cube(cube_size: f64, center: Vector3d) -> Vec<Triangle3d> {
     // colors
-    let red = &Color::new(1.0, 0.0, 0.0, 1.0);
-    let green = &Color::new(0.0, 1.0, 0.0, 1.0);
-    let blue = &Color::new(0.0, 0.0, 1.0, 1.0);
-    let cyan = &Color::new(0.0, 1.0, 1.0, 1.0);
-    let yellow = &Color::new(1.0, 1.0, 0.0, 1.0);
-    let magenta = &Color::new(1.0, 0.0, 1.0, 1.0);
+    let red = &named_color("red");
+    let green = &named_color("green");
+    let blue = &named_color("blue");
+    let cyan = &named_color("cyan");
+    let yellow = &named_color("yellow");
+    let magenta = &named_color("magenta");
 
     // vertices
     let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0) + center;
@@ -49,7 +51,7 @@ pub fn calc_torus(
     minor_radius: f64,
     major_resolution: usize,
     minor_resolution: usize,
-    color: &Color,
+    color: &Vector4d,
 ) -> Vec<Triangle3d> {
     let phis = linspace(0.0, 2.0 * PI, major_resolution);
     let thetas = linspace(0.0, 2.0 * PI, minor_resolution);

@@ -58,11 +58,3 @@ pub fn clamp(val: f64) -> f64 {
         val
     }
 }
-
-pub fn u32_color_to_vector(color: u32) -> Vector3d {
-    Vector3d::new(
-        ((color >> 16) & 0xFF) as f64 / 255.0,
-        ((color >> 8) & 0xFF) as f64 / 255.0,
-        (color & 0xFF) as f64 / 255.0,
-    )
-}

@@ -2,8 +2,9 @@ use std::time::Instant;
 
 use minifb::{Key, Window, WindowOptions};
 
+use crate::graphics::colors::named_color;
 use crate::graphics::{Canvas, PointLight, SSAA};
-use crate::graphics::{Color, calc_cube, calc_torus};
+use crate::graphics::{calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
 use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
@@ -46,19 +47,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, Color::named_color("black"), SSAA);
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA);
 
     // light
-    let light = PointLight::new(
-        Vector3d::new(1.0, 3.0, 5.0),
-        0.8,
-        Color::named_color("white"),
-    );
-    let light2 = PointLight::new(
-        Vector3d::new(3.0, -8.0, -2.0),
-        0.2,
-        Color::named_color("yellow"),
-    );
+    let light = PointLight::new(Vector3d::new(1.0, 3.0, 5.0), 0.8, named_color("white"));
+    let light2 = PointLight::new(Vector3d::new(3.0, -8.0, -2.0), 0.2, named_color("yellow"));
     canvas.add_point_light(light);
     canvas.add_point_light(light2);
 
@@ -70,7 +63,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         1.0,
         TORUS_RESOLUTION * 2,
         TORUS_RESOLUTION,
-        &Color::named_color("cyan"),
+        &named_color("cyan"),
     );
 
     let mut triangles = vec![];
@@ -205,10 +198,10 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
                 attrs[4] = normal_cam_space.x;
                 attrs[5] = normal_cam_space.y;
                 attrs[6] = normal_cam_space.z;
-                attrs[7] = *triangle.color.r();
-                attrs[8] = *triangle.color.g();
-                attrs[9] = *triangle.color.b();
-                attrs[10] = *triangle.color.a();
+                attrs[7] = triangle.color.x;
+                attrs[8] = triangle.color.y;
+                attrs[9] = triangle.color.z;
+                attrs[10] = triangle.color.u;
 
                 let ivec2 = IntegerVector2d::new(
                     (vec3.x * canvas.size_x_supersized_half as f64) as i32
