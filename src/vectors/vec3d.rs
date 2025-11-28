@@ -41,7 +41,7 @@ impl Vector3d {
     pub fn normalize(&self) -> Self {
         let len = self.length().abs();
         if len == 0.0 {
-            panic!("Trying to normalize a vector with length zero!!");
+            // panic!("Trying to normalize a vector with length zero!!");
             return Self::zero();
         } else {
             return Self {
@@ -74,6 +74,12 @@ impl Vector3d {
 
     pub fn truncate_to_2d(&self) -> Vector2d {
         return Vector2d::new(self.x, self.y);
+    }
+
+    pub fn equals_roughly(&self, other: &Self, epsilon: f64) -> bool {
+        return (self.x - other.x).abs() <= epsilon
+            && (self.y - other.y).abs() <= epsilon
+            && (self.z - other.z).abs() <= epsilon;
     }
 }
 

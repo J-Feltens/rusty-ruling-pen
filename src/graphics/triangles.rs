@@ -40,7 +40,6 @@ impl Triangle3d {
 }
 
 impl fmt::Display for Triangle3d {
-    // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,

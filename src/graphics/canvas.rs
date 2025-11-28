@@ -1,9 +1,9 @@
-use crate::graphics::colors::{
-    color_vec_from_f64, color_vec_from_u32, color_vec_to_u32, rgb_f64_to_u32,
-};
+use crate::graphics::colors::{color_vec_from_f64, color_vec_from_u32, color_vec_to_u32};
 use crate::graphics::fragment_shader::phong_frag;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTable, EdgeTableEntry};
-use crate::graphics::{PointLight, alpha_blend};
+use crate::graphics::shapes::{Mesh, Scene};
+use crate::graphics::{PointLight, Triangle3d, alpha_blend};
+use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use core::f64;
 use std::fmt;
@@ -44,6 +44,10 @@ pub struct Canvas {
     pub size_y_supersized: usize,
     pub size_x_supersized_half: usize,
     pub size_y_supersized_half: usize,
+
+    // scene, this holds all meshes to be rendered
+    pub scene: Scene,
+    pub perspective_matrix: Matrix4x4,
 }
 
 impl Canvas {
@@ -75,6 +79,8 @@ impl Canvas {
                 color_vec_to_u32(&bg_color);
                 size_x * size_y * ssaa_fac * ssaa_fac
             ],
+            scene: Scene::new(),
+            perspective_matrix: Matrix4x4::eye(),
         }
     }
 
@@ -97,6 +103,14 @@ impl Canvas {
 
     pub fn add_point_light(&mut self, light: PointLight) {
         self.lights.push(light);
+    }
+
+    pub fn add_mesh(&mut self, mesh: Mesh) {
+        self.scene.add_mesh(mesh);
+    }
+
+    pub fn set_perspective_matrix(&mut self, matrix: Matrix4x4) {
+        self.perspective_matrix = matrix;
     }
 
     pub fn set_pixel(&mut self, coords: (i32, i32), color: &Vector4d) {
@@ -158,7 +172,7 @@ impl Canvas {
                         );
                     }
                 }
-                mixed /= (self.ssaa_fac as f64 * self.ssaa_fac as f64);
+                mixed /= self.ssaa_fac as f64 * self.ssaa_fac as f64;
                 self.buffer[y * self.size_x + x] = color_vec_to_u32(&mixed);
             }
         }
@@ -342,5 +356,104 @@ impl Canvas {
 
             iteration += 1;
         }
+    }
+
+    pub fn render_scene_to_buffer(&mut self, e: Vector3d) {
+        // camera space stuff
+        // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
+        let a = Vector3d::zero(); // look at
+        let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
+        let g = a - e;
+
+        // camera space spanning vectors
+        let w = g.normalize() * -1.0;
+        let u = t.cross(w).normalize();
+        let v = w.cross(u);
+
+        let camera_matrix = Matrix4x4::from_vecs(
+            Vector4d::from_vector3d(&u, -u.dot(e)),
+            Vector4d::from_vector3d(&v, -v.dot(e)),
+            Vector4d::from_vector3d(&w, -w.dot(e)),
+            Vector4d::new(0.0, 0.0, 0.0, 1.0),
+        );
+
+        // transform lights to camera space
+
+        let mut lights_cam_space_reallight = self.lights.clone();
+        for light in lights_cam_space_reallight.iter_mut() {
+            light.pos = camera_matrix
+                .times_vec(Vector4d::from_vector3d(&light.pos, 1.0))
+                .truncate_to_3d();
+        }
+
+        for mesh in self.scene.meshes.clone() {
+            for face in mesh.faces.iter() {
+                let triangle = Triangle3d::new(
+                    mesh.vertices[face[0]],
+                    mesh.vertices[face[1]],
+                    mesh.vertices[face[2]],
+                    &mesh.color,
+                );
+                // println!("{}", triangle);
+
+                // backface culling
+                // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
+                if w.dot(triangle.normal) < 0.0 {
+                    continue;
+                }
+
+                let mut skip_triangle = false;
+                let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
+                for (i, vertex) in triangle.vertices.iter().enumerate() {
+                    let vertex_homo = Vector4d::from_vector3d(vertex, 1.0); // hehe
+
+                    // transform to camera space
+                    let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
+
+                    // perspective projection
+                    let vertex_projected = self.perspective_matrix.times_vec(vertex_cam_space);
+
+                    // perspective divide by z
+                    let vec3 = vertex_projected.truncate_to_3d() / vertex_projected.u;
+
+                    if vec3.x < -1.0 || vec3.x > 1.0 || vec3.y < -1.0 || vec3.y > 1.0 {
+                        skip_triangle = true;
+                    }
+
+                    // store attributes like pos and normal while still in camera space
+                    let normal_cam_space =
+                        camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
+                    let mut attrs: Vec<f64> = vec![0.0; 11];
+                    attrs[0] = vertex_cam_space.x;
+                    attrs[1] = vertex_cam_space.y;
+                    attrs[2] = vertex_cam_space.z;
+                    attrs[3] = vertex_projected.z;
+                    attrs[4] = normal_cam_space.x;
+                    attrs[5] = normal_cam_space.y;
+                    attrs[6] = normal_cam_space.z;
+                    attrs[7] = triangle.color.x;
+                    attrs[8] = triangle.color.y;
+                    attrs[9] = triangle.color.z;
+                    attrs[10] = triangle.color.u;
+
+                    let ivec2 = IntegerVector2d::new(
+                        (vec3.x * self.size_x_supersized_half as f64) as i32
+                            + self.size_x_supersized_half as i32,
+                        (vec3.y * self.size_y_supersized_half as f64) as i32
+                            + self.size_y_supersized_half as i32,
+                        attrs,
+                    );
+                    triangle_projected[i] = ivec2;
+                }
+
+                // cull triangles that is even partially out if bounds
+                if skip_triangle {
+                    continue;
+                }
+                self.draw_polygon_onto_buffer(&triangle_projected, &lights_cam_space_reallight);
+            }
+        }
+
+        self.apply_ssaa();
     }
 }
