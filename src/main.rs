@@ -17,7 +17,7 @@ const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const SSAA: SSAA = SSAA::X4;
-const SHAPE_RESOLUTION: usize = 128;
+const SHAPE_RESOLUTION: usize = 64;
 const RENDER_SMOOTH: bool = true;
 
 // fn main() {
@@ -81,12 +81,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
     let sphere = calc_sphere(
         Vector3d::zero(),
-        3.0,
+        1.3,
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
 
-    // canvas.add_mesh(torus);
+    canvas.add_mesh(torus);
     canvas.add_mesh(sphere);
     // canvas.add_mesh(cube);
 
