@@ -1,19 +1,85 @@
-use crate::graphics::Triangle3d;
-use crate::graphics::colors::named_color;
 use crate::util::linspace;
 use crate::vectors::{Matrix3x3, Vector3d, Vector4d};
-use image::error::UnsupportedErrorKind::Color;
 use std::f64::consts::PI;
 
-pub fn calc_cube(cube_size: f64, center: Vector3d) -> Vec<Triangle3d> {
-    // colors
-    let red = &named_color("red");
-    let green = &named_color("green");
-    let blue = &named_color("blue");
-    let cyan = &named_color("cyan");
-    let yellow = &named_color("yellow");
-    let magenta = &named_color("magenta");
+#[derive(Debug, Clone)]
+pub struct Scene {
+    pub meshes: Vec<Mesh>,
+}
 
+impl Scene {
+    pub fn new() -> Self {
+        Self { meshes: vec![] }
+    }
+
+    pub fn add_mesh(&mut self, mesh: Mesh) {
+        self.meshes.push(mesh);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Mesh {
+    pub vertices: Vec<Vector3d>,
+    pub faces: Vec<Vec<usize>>,
+    pub color: Vector4d,
+
+    pub vertex_merge_radius: f64,
+}
+
+impl Mesh {
+    pub fn init(color: Vector4d, vertex_merge_radius: f64) -> Self {
+        Self::new(vec![], vec![], color, vertex_merge_radius)
+    }
+    pub fn new(
+        vertices: Vec<Vector3d>,
+        faces: Vec<Vec<usize>>,
+        color: Vector4d,
+        vertex_merge_radius: f64,
+    ) -> Self {
+        Self {
+            vertices,
+            faces,
+            color,
+            vertex_merge_radius,
+        }
+    }
+
+    pub fn add_face(&mut self, v1: Vector3d, v2: Vector3d, v3: Vector3d) {
+        let mut new_face = vec![0; 3];
+        let mut found_v1 = false;
+        let mut found_v2 = false;
+        let mut found_v3 = false;
+        for i in 0..self.vertices.len() {
+            if self.vertices[i].equals_roughly(&v1, self.vertex_merge_radius) {
+                new_face[0] = i;
+                found_v1 = true;
+            }
+            if self.vertices[i].equals_roughly(&v2, self.vertex_merge_radius) {
+                new_face[1] = i;
+                found_v2 = true;
+            }
+            if self.vertices[i].equals_roughly(&v3, self.vertex_merge_radius) {
+                new_face[2] = i;
+                found_v3 = true;
+            }
+        }
+        if !found_v1 {
+            self.vertices.push(v1);
+            new_face[0] = self.vertices.len() - 1;
+        }
+        if !found_v2 {
+            self.vertices.push(v2);
+            new_face[1] = self.vertices.len() - 1;
+        }
+        if !found_v3 {
+            self.vertices.push(v3);
+            new_face[2] = self.vertices.len() - 1;
+        }
+        self.faces.push(new_face);
+    }
+}
+
+pub fn calc_cube(cube_size: f64, center: Vector3d, color: Vector4d) -> Mesh {
     // vertices
     let v1 = Vector3d::new(-cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0) + center;
     let v2 = Vector3d::new(cube_size / 2.0, -cube_size / 2.0, -cube_size / 2.0) + center;
@@ -25,25 +91,29 @@ pub fn calc_cube(cube_size: f64, center: Vector3d) -> Vec<Triangle3d> {
     let v7 = Vector3d::new(cube_size / 2.0, cube_size / 2.0, cube_size / 2.0) + center;
     let v8 = Vector3d::new(-cube_size / 2.0, cube_size / 2.0, cube_size / 2.0) + center;
 
-    // faces
-    let triangles = vec![
-        // floor
-        Triangle3d::new(v3, v2, v1, red),
-        Triangle3d::new(v4, v3, v1, red),
-        // lid
-        Triangle3d::new(v5, v6, v7, magenta),
-        Triangle3d::new(v5, v7, v8, magenta),
-        // sides
-        Triangle3d::new(v1, v2, v6, yellow),
-        Triangle3d::new(v6, v5, v1, yellow),
-        Triangle3d::new(v2, v3, v7, cyan),
-        Triangle3d::new(v7, v6, v2, cyan),
-        Triangle3d::new(v3, v4, v8, green),
-        Triangle3d::new(v8, v7, v3, green),
-        Triangle3d::new(v4, v1, v5, blue),
-        Triangle3d::new(v5, v8, v4, blue),
-    ];
-    return triangles;
+    let e1 = vec![2, 1, 0];
+    let e2 = vec![3, 2, 0];
+
+    let e3 = vec![4, 5, 6];
+    let e4 = vec![4, 6, 7];
+
+    let e5 = vec![0, 1, 5];
+    let e6 = vec![5, 4, 0];
+    let e7 = vec![1, 2, 6];
+    let e8 = vec![6, 5, 1];
+    let e9 = vec![2, 3, 7];
+    let e10 = vec![7, 6, 2];
+    let e11 = vec![3, 0, 4];
+    let e12 = vec![4, 7, 3];
+
+    let mesh = Mesh::new(
+        vec![v1, v2, v3, v4, v5, v6, v7, v8],
+        vec![e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12],
+        color,
+        0.01,
+    );
+
+    return mesh;
 }
 //
 pub fn calc_torus(
@@ -53,9 +123,11 @@ pub fn calc_torus(
     major_resolution: usize,
     minor_resolution: usize,
     color: &Vector4d,
-) -> Vec<Triangle3d> {
+) -> Mesh {
     let phis = linspace(0.0, 2.0 * PI, major_resolution);
     let thetas = linspace(0.0, 2.0 * PI, minor_resolution);
+
+    let mut mesh = Mesh::init(color.clone(), 0.00001);
 
     let mut vertices = vec![];
     for major in 0..major_resolution {
@@ -71,7 +143,6 @@ pub fn calc_torus(
         }
     }
 
-    let mut triangles = vec![];
     for major in 0..major_resolution {
         for minor in 0..minor_resolution {
             let (p1, p2, p3, p4) = (
@@ -84,21 +155,18 @@ pub fn calc_torus(
             );
 
             // let rand_color = Color::random();
-            triangles.push(Triangle3d::new(p3, p2, p1, &color));
-            triangles.push(Triangle3d::new(p2, p3, p4, &color));
+            mesh.add_face(p3, p2, p1);
+            mesh.add_face(p2, p3, p4);
+            // triangles.push(Triangle3d::new(p3, p2, p1, &color));
+            // triangles.push(Triangle3d::new(p2, p3, p4, &color));
         }
     }
-    return triangles;
+    return mesh;
 }
 
-pub fn calc_sphere(
-    origin: Vector3d,
-    radius: f64,
-    resolution: usize,
-    color: &Vector4d,
-) -> Vec<Triangle3d> {
+pub fn calc_sphere(origin: Vector3d, radius: f64, resolution: usize, color: &Vector4d) -> Mesh {
     let phis = linspace(0.0, 2.0 * PI, resolution);
-    let mut thetas = linspace(0.0, PI, resolution);
+    let thetas = linspace(0.0, PI, resolution);
 
     let mut vertices = vec![Vector3d::zero(); resolution * resolution];
     for phi_idx in 0..resolution {
@@ -115,7 +183,7 @@ pub fn calc_sphere(
         }
     }
 
-    let mut triangles = vec![];
+    let mut mesh = Mesh::init(color.clone(), 0.00001);
     for phi_idx in 0..resolution {
         for theta_idx in 0..resolution - 1 {
             if theta_idx == 0 {
@@ -124,7 +192,7 @@ pub fn calc_sphere(
                     vertices[phi_idx * resolution + theta_idx + 1],
                     vertices[((phi_idx + 1) % resolution) * resolution + theta_idx + 1],
                 );
-                triangles.push(Triangle3d::new(p1, p2, p3, color));
+                mesh.add_face(p1, p2, p3);
             } else {
                 let (p1, p2, p3, p4) = (
                     vertices[phi_idx * resolution + theta_idx],
@@ -132,8 +200,8 @@ pub fn calc_sphere(
                     vertices[((phi_idx + 1) % resolution) * resolution + theta_idx],
                     vertices[((phi_idx + 1) % resolution) * resolution + theta_idx + 1],
                 );
-                triangles.push(Triangle3d::new(p1, p2, p3, color));
-                triangles.push(Triangle3d::new(p2, p4, p3, color));
+                mesh.add_face(p1, p2, p3);
+                mesh.add_face(p2, p4, p3);
             }
         }
     }
@@ -146,7 +214,7 @@ pub fn calc_sphere(
             vertices[((phi_idx + 1) % resolution) * resolution + resolution - 1],
             bottom_vertex,
         );
-        triangles.push(Triangle3d::new(p1, p3, p2, color));
+        mesh.add_face(p1, p3, p2);
     }
-    return triangles;
+    return mesh;
 }
