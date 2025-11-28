@@ -17,8 +17,8 @@ pub mod vectors;
 const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X64;
-const SHAPE_RESOLUTION: usize = 512;
+const SSAA: SSAA = SSAA::X16;
+const SHAPE_RESOLUTION: usize = 128;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();

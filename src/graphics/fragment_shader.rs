@@ -1,6 +1,5 @@
 use crate::graphics::PointLight;
-use crate::graphics::colors::{apply_colored_lighting, clamp_color, named_color};
-use crate::util::clamp;
+use crate::graphics::colors::{apply_colored_lighting, clamp_color};
 use crate::vectors::{Vector3d, Vector4d};
 
 pub fn phong_frag(
