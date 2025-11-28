@@ -1,5 +1,5 @@
 use crate::graphics::PointLight;
-use crate::graphics::colors::apply_colored_lighting;
+use crate::graphics::colors::{apply_colored_lighting, clamp_color, named_color};
 use crate::util::clamp;
 use crate::vectors::{Vector3d, Vector4d};
 
@@ -20,10 +20,12 @@ pub fn phong_frag(
     */
 
     // Phong
-    let ambient = 0.1;
+    let ambient = 0.02;
     let diffuse_fac = 0.7;
-    let specular_fac = 1.0;
+    let specular_fac = 0.8;
     let shinyness: i32 = 300;
+
+    let specular_color = clamp_color(color * 2.0);
 
     let mut lighting_total = Vector4d::ones() * ambient;
 
@@ -43,7 +45,7 @@ pub fn phong_frag(
         let v_dot_r = v.dot(r);
         let l_spec = light.strength * v_dot_r.powi(shinyness) * specular_fac;
 
-        lighting_total += light.emission * l_spec;
+        lighting_total += specular_color * l_spec;
     }
 
     return apply_colored_lighting(&color, &lighting_total);
