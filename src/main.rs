@@ -17,7 +17,7 @@ const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
 const SSAA: SSAA = SSAA::X4;
-const SHAPE_RESOLUTION: usize = 32;
+const SHAPE_RESOLUTION: usize = 128;
 const RENDER_SMOOTH: bool = true;
 
 // fn main() {

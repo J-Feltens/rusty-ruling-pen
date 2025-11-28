@@ -395,7 +395,6 @@ impl Canvas {
         }
 
         for mesh in self.scene.meshes.clone() {
-            let vertex_normals = mesh.interpolate_vertex_normals();
             for face in mesh.faces.iter() {
                 let triangle = Triangle3d::new(
                     mesh.vertices[face[0]],
@@ -433,7 +432,7 @@ impl Canvas {
                     let normal_cam_space;
                     if self.render_smooth {
                         normal_cam_space = camera_matrix
-                            .times_vec(Vector4d::from_vector3d(&vertex_normals[face[i]], 0.0));
+                            .times_vec(Vector4d::from_vector3d(&mesh.vertex_normals[face[i]], 0.0));
                     } else {
                         normal_cam_space =
                             camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
