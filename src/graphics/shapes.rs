@@ -77,6 +77,24 @@ impl Mesh {
         }
         self.faces.push(new_face);
     }
+
+    pub fn interpolate_vertex_normals(&self) -> Vec<Vector3d> {
+        let mut normals = vec![Vector3d::zero(); self.vertices.len()];
+
+        for target_vertex in 0..self.vertices.len() {
+            let mut new_normal = Vector3d::zero();
+            for face in &self.faces {
+                if face.contains(&target_vertex) {
+                    // face contains target vertex, calculate face normal and add to new normal
+                    new_normal += (self.vertices[face[1]] - self.vertices[face[0]])
+                        .cross(self.vertices[face[2]] - self.vertices[face[0]])
+                        .normalize();
+                }
+            }
+            normals[target_vertex] = new_normal.normalize();
+        }
+        return normals;
+    }
 }
 
 pub fn calc_cube(cube_size: f64, center: Vector3d, color: Vector4d) -> Mesh {
