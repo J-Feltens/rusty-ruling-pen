@@ -24,6 +24,7 @@ pub struct Mesh {
     pub color: Vector4d,
 
     pub vertex_merge_radius: f64,
+    pub vertex_normals: Vec<Vector3d>,
 }
 
 impl Mesh {
@@ -41,6 +42,7 @@ impl Mesh {
             faces,
             color,
             vertex_merge_radius,
+            vertex_normals: Vec::new(),
         }
     }
 
@@ -77,6 +79,24 @@ impl Mesh {
         }
         self.faces.push(new_face);
     }
+
+    pub fn recalc_vertex_normals(&mut self) {
+        let mut normals = vec![Vector3d::zero(); self.vertices.len()];
+
+        for target_vertex in 0..self.vertices.len() {
+            let mut new_normal = Vector3d::zero();
+            for face in &self.faces {
+                if face.contains(&target_vertex) {
+                    // face contains target vertex, calculate face normal and add to new normal
+                    new_normal += (self.vertices[face[1]] - self.vertices[face[0]])
+                        .cross(self.vertices[face[2]] - self.vertices[face[0]])
+                        .normalize();
+                }
+            }
+            normals[target_vertex] = new_normal.normalize();
+        }
+        self.vertex_normals = normals;
+    }
 }
 
 pub fn calc_cube(cube_size: f64, center: Vector3d, color: Vector4d) -> Mesh {
@@ -106,13 +126,13 @@ pub fn calc_cube(cube_size: f64, center: Vector3d, color: Vector4d) -> Mesh {
     let e11 = vec![3, 0, 4];
     let e12 = vec![4, 7, 3];
 
-    let mesh = Mesh::new(
+    let mut mesh = Mesh::new(
         vec![v1, v2, v3, v4, v5, v6, v7, v8],
         vec![e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12],
         color,
         0.01,
     );
-
+    mesh.recalc_vertex_normals();
     return mesh;
 }
 //
@@ -161,6 +181,8 @@ pub fn calc_torus(
             // triangles.push(Triangle3d::new(p2, p3, p4, &color));
         }
     }
+
+    mesh.recalc_vertex_normals();
     return mesh;
 }
 
@@ -216,5 +238,7 @@ pub fn calc_sphere(origin: Vector3d, radius: f64, resolution: usize, color: &Vec
         );
         mesh.add_face(p1, p3, p2);
     }
+
+    mesh.recalc_vertex_normals();
     return mesh;
 }

@@ -16,8 +16,9 @@ pub mod vectors;
 const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X16;
-const SHAPE_RESOLUTION: usize = 128;
+const SSAA: SSAA = SSAA::X4;
+const SHAPE_RESOLUTION: usize = 64;
+const RENDER_SMOOTH: bool = true;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -46,7 +47,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA);
+    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA, RENDER_SMOOTH);
 
     // light
 
@@ -80,13 +81,14 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     );
     let sphere = calc_sphere(
         Vector3d::zero(),
-        1.2,
+        1.3,
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
 
     canvas.add_mesh(torus);
     canvas.add_mesh(sphere);
+    // canvas.add_mesh(cube);
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;

@@ -48,10 +48,17 @@ pub struct Canvas {
     // scene, this holds all meshes to be rendered
     pub scene: Scene,
     pub perspective_matrix: Matrix4x4,
+    render_smooth: bool,
 }
 
 impl Canvas {
-    pub fn new(size_x: usize, size_y: usize, bg_color: Vector4d, ssaa: SSAA) -> Canvas {
+    pub fn new(
+        size_x: usize,
+        size_y: usize,
+        bg_color: Vector4d,
+        ssaa: SSAA,
+        render_smooth: bool,
+    ) -> Canvas {
         let ssaa_fac;
         match ssaa {
             SSAA::X1 => ssaa_fac = 1,
@@ -60,15 +67,15 @@ impl Canvas {
             SSAA::X64 => ssaa_fac = 8,
         }
         Canvas {
-            size_x: size_x,
-            size_y: size_y,
+            size_x,
+            size_y,
 
             buffer: vec![color_vec_to_u32(&bg_color); size_x * size_y],
-            bg_color: bg_color,
+            bg_color,
             lights: vec![],
 
-            ssaa: ssaa,
-            ssaa_fac: ssaa_fac,
+            ssaa,
+            ssaa_fac,
             size_x_supersized: size_x * ssaa_fac,
             size_y_supersized: size_y * ssaa_fac,
             size_x_supersized_half: size_x * ssaa_fac / 2,
@@ -81,6 +88,7 @@ impl Canvas {
             ],
             scene: Scene::new(),
             perspective_matrix: Matrix4x4::eye(),
+            render_smooth,
         }
     }
 
@@ -421,8 +429,14 @@ impl Canvas {
                     }
 
                     // store attributes like pos and normal while still in camera space
-                    let normal_cam_space =
-                        camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
+                    let normal_cam_space;
+                    if self.render_smooth {
+                        normal_cam_space = camera_matrix
+                            .times_vec(Vector4d::from_vector3d(&mesh.vertex_normals[face[i]], 0.0));
+                    } else {
+                        normal_cam_space =
+                            camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
+                    }
                     let mut attrs: Vec<f64> = vec![0.0; 11];
                     attrs[0] = vertex_cam_space.x;
                     attrs[1] = vertex_cam_space.y;
