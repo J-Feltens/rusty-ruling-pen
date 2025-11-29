@@ -1,6 +1,7 @@
 use crate::util::linspace;
 use crate::vectors::{Matrix3x3, Vector3d, Vector4d};
 use std::f64::consts::PI;
+use std::fs;
 
 #[derive(Debug, Clone)]
 pub struct Scene {
@@ -239,6 +240,59 @@ pub fn calc_sphere(origin: Vector3d, radius: f64, resolution: usize, color: &Vec
         mesh.add_face(p1, p3, p2);
     }
 
+    mesh.recalc_vertex_normals();
+    return mesh;
+}
+
+pub fn calc_teapot(color: Vector4d, resolution: usize) -> Mesh {
+    /*
+       expects resolution to be either 1, 2 or 3
+    */
+
+    let file_path = format!(
+        "src/graphics/{}.txt",
+        if resolution == 1 {
+            "utah_teapot_3488"
+        } else if resolution == 2 {
+            "utah_teapot_19480"
+        } else if resolution == 3 {
+            "utah_teapot_145620"
+        } else {
+            panic!("Have you bot enough vertices already??")
+        }
+    );
+    let mut mesh = Mesh::init(color, 0.0);
+
+    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
+    let faces: Vec<&str> = contents.split("\n\n").collect();
+    let rot_mat = Matrix3x3::calc_rotation_matrix(Vector3d::new(1.0, 0.0, 0.0), PI / 2.0);
+    for face in faces {
+        let vertices: Vec<&str> = face.split("\n").collect();
+        let v1_string: Vec<&str> = vertices[0].split(" ").collect();
+        let v2_string: Vec<&str> = vertices[1].split(" ").collect();
+        let v3_string: Vec<&str> = vertices[2].split(" ").collect();
+        let v1 = Vector3d::new(
+            v1_string[0].parse::<f64>().unwrap(),
+            v1_string[1].parse::<f64>().unwrap() - 1.0,
+            v1_string[2].parse::<f64>().unwrap(),
+        );
+        let v2 = Vector3d::new(
+            v2_string[0].parse::<f64>().unwrap(),
+            v2_string[1].parse::<f64>().unwrap() - 1.0,
+            v2_string[2].parse::<f64>().unwrap(),
+        );
+        let v3 = Vector3d::new(
+            v3_string[0].parse::<f64>().unwrap(),
+            v3_string[1].parse::<f64>().unwrap() - 1.0,
+            v3_string[2].parse::<f64>().unwrap(),
+        );
+
+        mesh.add_face(
+            rot_mat.times_vec(v1),
+            rot_mat.times_vec(v2),
+            rot_mat.times_vec(v3),
+        );
+    }
     mesh.recalc_vertex_normals();
     return mesh;
 }

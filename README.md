@@ -7,6 +7,7 @@ attempt to get a better grasp
 both of the language and the algorithms involved with computer graphics, I
 implemented almost all data structures, algorithms and vector arithmetic myself. This has been... somewhat successful.
 
+![teapot.png](teapot.png)
 ![img.png](demo.png)
 
 ## Data structures:

@@ -3,20 +3,20 @@ use std::time::Instant;
 use minifb::{Key, Window, WindowOptions};
 
 use crate::graphics::colors::named_color;
-use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere};
+use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere, calc_teapot};
 use crate::graphics::{calc_cube, calc_torus};
 use crate::util::calc_perspective_matrix;
-use crate::vectors::Vector3d;
+use crate::vectors::{Vector3d, Vector4d};
 use std::f64::consts::PI;
 
 pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 800;
+const SIZE_X: usize = 800;e
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X4;
+const SSAA: SSAA = SSAA::X64;
 const SHAPE_RESOLUTION: usize = 64;
 const RENDER_SMOOTH: bool = true;
 
@@ -50,22 +50,17 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA, RENDER_SMOOTH);
 
     // light
+    canvas.add_point_light(PointLight::new(
+        Vector3d::new(5.0, 5.0, 0.0),
+        1.0,
+        Vector4d::new(1.0, 0.8, 0.3, 1.0),
+    ));
 
-    let light_array_radius = 6.0;
-    let light_array_z = 3.0;
-    let light_array_strength = 1.0;
-    let light_colors = vec!["red", "yellow", "green", "cyan", "blue", "magenta"];
-    for i in 0..6 {
-        canvas.add_point_light(PointLight::new(
-            Vector3d::new(
-                (PI * i as f64 / 3.0).cos() * light_array_radius,
-                (PI * i as f64 / 3.0).sin() * light_array_radius,
-                if i % 2 == 0 { 1.0 } else { -1.0 } * light_array_z,
-            ),
-            light_array_strength,
-            named_color(light_colors[i]),
-        ));
-    }
+    canvas.add_point_light(PointLight::new(
+        Vector3d::new(-7.0, 5.0, 3.0),
+        1.0,
+        named_color("cyan"),
+    ));
 
     // cube
     let cube = calc_cube(2.0, Vector3d::zero(), named_color("white"));
@@ -85,10 +80,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
+    let teapot = calc_teapot(named_color("white"), 3);
 
-    canvas.add_mesh(torus);
-    canvas.add_mesh(sphere);
+    // canvas.add_mesh(torus);
+    // canvas.add_mesh(sphere);
     // canvas.add_mesh(cube);
+    canvas.add_mesh(teapot);
 
     // spherical coords for simple camera movement
     let mut gimbal_radius: f64 = 30.0;

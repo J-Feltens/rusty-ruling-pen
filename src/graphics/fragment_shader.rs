@@ -19,7 +19,7 @@ pub fn phong_frag(
     */
 
     // Phong
-    let ambient = 0.02;
+    let ambient = 0.1;
     let diffuse_fac = 0.7;
     let specular_fac = 0.8;
     let shinyness: i32 = 300;
