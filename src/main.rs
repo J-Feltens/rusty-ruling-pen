@@ -5,7 +5,7 @@ use minifb::{Key, Window, WindowOptions};
 use crate::graphics::colors::named_color;
 use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere, calc_teapot};
 use crate::graphics::{calc_cube, calc_torus};
-use crate::util::calc_perspective_matrix;
+use crate::util::{calc_perspective_matrix, clear_console};
 use crate::vectors::{Vector3d, Vector4d};
 use std::f64::consts::PI;
 
@@ -13,10 +13,10 @@ pub mod graphics;
 pub mod util;
 pub mod vectors;
 
-const SIZE_X: usize = 800;e
+const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X64;
+const SSAA: SSAA = SSAA::X0_125;
 const SHAPE_RESOLUTION: usize = 64;
 const RENDER_SMOOTH: bool = true;
 
@@ -80,7 +80,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         SHAPE_RESOLUTION,
         &named_color("white"),
     );
-    let teapot = calc_teapot(named_color("white"), 3);
+    let teapot = calc_teapot(named_color("white"), 1);
 
     // canvas.add_mesh(torus);
     // canvas.add_mesh(sphere);
@@ -158,17 +158,24 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
 
         // print statistics:
         let interval = global_timer.elapsed().as_millis();
+        clear_console();
         println!("{} FPS", 1.0 / (interval as f64 / 1000.0));
         println!("Rendertime: {} ms", interval,);
         println!("Render config:");
         println!(
-            "  Image size: {}x{} pixels, {} pixels in total",
+            "  Image size: \n       {}x{} pixels, {} pixels in total",
             canvas.size_x,
             canvas.size_y,
             canvas.buffer.len()
         );
-        println!("  Antialiasing: {}", canvas.ssaa);
+        println!("  Antialiasing: \n        {}", canvas.ssaa);
         global_timer = Instant::now();
+        println!(
+            "       {}x{} pixels, {} pixels in total",
+            canvas.size_x_supersized,
+            canvas.size_y_supersized,
+            canvas.buffer_supersized.len()
+        );
         // thread::sleep(ANIM_INTERVAL);
     }
 

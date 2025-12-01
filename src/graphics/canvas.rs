@@ -9,6 +9,8 @@ use core::f64;
 use std::fmt;
 
 pub enum SSAA {
+    X0_125,
+    X0_25,
     X1,
     X4,
     X16,
@@ -19,6 +21,8 @@ impl fmt::Display for SSAA {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            SSAA::X0_125 => write!(f, "0.125X SSAA (Upscaling mode)"),
+            SSAA::X0_25 => write!(f, "0.25X SSAA (Upscalign mode)"),
             SSAA::X1 => write!(f, "1X SSAA"),
             SSAA::X4 => write!(f, "4X SSAA"),
             SSAA::X16 => write!(f, "16X SSAA"),
@@ -38,8 +42,9 @@ pub struct Canvas {
     pub lights: Vec<PointLight>,
 
     // for super-sample-anti-aliasing
+    // usually, names containing "supersized" refer to this context
     pub ssaa: SSAA,
-    pub ssaa_fac: usize,
+    pub ssaa_fac: f64,
     pub size_x_supersized: usize,
     pub size_y_supersized: usize,
     pub size_x_supersized_half: usize,
@@ -61,11 +66,33 @@ impl Canvas {
     ) -> Canvas {
         let ssaa_fac;
         match ssaa {
-            SSAA::X1 => ssaa_fac = 1,
-            SSAA::X4 => ssaa_fac = 2,
-            SSAA::X16 => ssaa_fac = 4,
-            SSAA::X64 => ssaa_fac = 8,
+            SSAA::X0_125 => ssaa_fac = 0.25,
+            SSAA::X0_25 => ssaa_fac = 0.5,
+            SSAA::X1 => ssaa_fac = 1.0,
+            SSAA::X4 => ssaa_fac = 2.0,
+            SSAA::X16 => ssaa_fac = 4.0,
+            SSAA::X64 => ssaa_fac = 8.0,
         }
+
+        // check if upscaling is possible
+        if ssaa_fac == 0.25 {
+            if size_x % 2 != 0 || size_y % 2 != 0 {
+                panic!(
+                    "Canvas size must be divisible by 2 for 0.25 upscaling mode, found {}, {}",
+                    size_x, size_y
+                )
+            }
+        } else if ssaa_fac == 0.125 {
+            if size_x % 4 != 0 || size_y % 4 != 0 {
+                panic!(
+                    "Canvas size must be divisible by 4 for 0.125 upscaling mode, found {}, {}",
+                    size_x, size_y
+                )
+            }
+        }
+
+        let size_x_supersized = size_x as f64 * ssaa_fac;
+        let size_y_supersized = size_y as f64 * ssaa_fac;
         Canvas {
             size_x,
             size_y,
@@ -76,15 +103,15 @@ impl Canvas {
 
             ssaa,
             ssaa_fac,
-            size_x_supersized: size_x * ssaa_fac,
-            size_y_supersized: size_y * ssaa_fac,
-            size_x_supersized_half: size_x * ssaa_fac / 2,
-            size_y_supersized_half: size_y * ssaa_fac / 2,
+            size_x_supersized: size_x_supersized as usize,
+            size_y_supersized: size_y_supersized as usize,
+            size_x_supersized_half: (size_x_supersized / 2.0) as usize,
+            size_y_supersized_half: (size_y_supersized / 2.0) as usize,
 
-            z_buffer_supersized: vec![f64::MAX; size_x * size_y * ssaa_fac * ssaa_fac],
+            z_buffer_supersized: vec![f64::MAX; (size_x_supersized * size_y_supersized) as usize],
             buffer_supersized: vec![
                 color_vec_to_u32(&bg_color);
-                size_x * size_y * ssaa_fac * ssaa_fac
+                (size_x_supersized * size_y_supersized) as usize
             ],
             scene: Scene::new(),
             perspective_matrix: Matrix4x4::eye(),
@@ -168,20 +195,79 @@ impl Canvas {
     }
 
     pub fn apply_ssaa(&mut self) {
-        for y in 0..self.size_y {
-            for x in 0..self.size_x {
-                let mut mixed = Vector4d::zeros();
-                for y_ in 0..self.ssaa_fac {
-                    for x_ in 0..self.ssaa_fac {
-                        mixed += color_vec_from_u32(
-                            self.buffer_supersized[(self.ssaa_fac * y + y_)
-                                * self.size_x_supersized
-                                + (self.ssaa_fac * x + x_)],
-                        );
+        if self.ssaa_fac >= 1.0 {
+            // SSAA in antialiasing mode
+            for y in 0..self.size_y {
+                for x in 0..self.size_x {
+                    let mut mixed = Vector4d::zeros();
+                    for y_ in 0..self.ssaa_fac as usize {
+                        for x_ in 0..self.ssaa_fac as usize {
+                            mixed += color_vec_from_u32(
+                                self.buffer_supersized[(self.ssaa_fac as usize * y + y_)
+                                    * self.size_x_supersized
+                                    + (self.ssaa_fac as usize * x + x_)],
+                            );
+                        }
+                    }
+                    mixed /= self.ssaa_fac as f64 * self.ssaa_fac as f64;
+                    self.buffer[y * self.size_x + x] = color_vec_to_u32(&mixed);
+                }
+            }
+        } else {
+            // SSAA in upscaling mode
+            if self.ssaa_fac == 0.5 {
+                for y_ in 0..self.size_y_supersized {
+                    for x_ in 0..self.size_x_supersized {
+                        self.buffer[y_ * 2 * self.size_x + x_ * 2] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 2 + 1) * self.size_x + x_ * 2] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[y_ * 2 * self.size_x + (x_ * 2 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 2 + 1) * self.size_x + (x_ * 2 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
                     }
                 }
-                mixed /= self.ssaa_fac as f64 * self.ssaa_fac as f64;
-                self.buffer[y * self.size_x + x] = color_vec_to_u32(&mixed);
+            } else if self.ssaa_fac == 0.25 {
+                for y_ in 0..self.size_y_supersized {
+                    for x_ in 0..self.size_x_supersized {
+                        self.buffer[(y_ * 4) * self.size_x + (x_ * 4)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 1) * self.size_x + (x_ * 4)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 2) * self.size_x + (x_ * 4)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 3) * self.size_x + (x_ * 4)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+
+                        self.buffer[(y_ * 4) * self.size_x + (x_ * 4 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 1) * self.size_x + (x_ * 4 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 2) * self.size_x + (x_ * 4 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 3) * self.size_x + (x_ * 4 + 1)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+
+                        self.buffer[(y_ * 4) * self.size_x + (x_ * 4 + 2)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 1) * self.size_x + (x_ * 4 + 2)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 2) * self.size_x + (x_ * 4 + 2)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 3) * self.size_x + (x_ * 4 + 2)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+
+                        self.buffer[(y_ * 4) * self.size_x + (x_ * 4 + 3)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 1) * self.size_x + (x_ * 4 + 3)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 2) * self.size_x + (x_ * 4 + 3)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                        self.buffer[(y_ * 4 + 3) * self.size_x + (x_ * 4 + 3)] =
+                            self.buffer_supersized[y_ * self.size_x_supersized + x_];
+                    }
+                }
             }
         }
     }
