@@ -8,6 +8,7 @@ use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use core::f64;
 use std::fmt;
 
+#[derive(Clone)]
 pub enum SSAA {
     X0_125,
     X0_25,
@@ -26,11 +27,12 @@ impl fmt::Display for SSAA {
             SSAA::X1 => write!(f, "1X SSAA"),
             SSAA::X4 => write!(f, "4X SSAA"),
             SSAA::X16 => write!(f, "16X SSAA"),
-            SSAA::X64 => write!(f, "32X SSAA"),
+            SSAA::X64 => write!(f, "64X SSAA"),
         }
     }
 }
 
+#[derive(Clone)]
 pub struct Canvas {
     pub size_x: usize,
     pub size_y: usize,
@@ -64,6 +66,44 @@ impl Canvas {
         ssaa: SSAA,
         render_smooth: bool,
     ) -> Canvas {
+        let (
+            ssaa_fac,
+            size_x_supersized,
+            size_y_supersized,
+            size_x_supersized_half,
+            size_y_supersized_half,
+            buffer_supersized,
+            z_buffer_supersized,
+        ) = Self::calc_ssaa_variables(&ssaa, size_x, size_y, &bg_color);
+        Canvas {
+            size_x,
+            size_y,
+
+            buffer: vec![color_vec_to_u32(&bg_color); size_x * size_y],
+            bg_color,
+            lights: vec![],
+
+            ssaa,
+            ssaa_fac,
+            size_x_supersized,
+            size_y_supersized,
+            size_x_supersized_half,
+            size_y_supersized_half,
+
+            z_buffer_supersized,
+            buffer_supersized,
+            scene: Scene::new(),
+            perspective_matrix: Matrix4x4::eye(),
+            render_smooth,
+        }
+    }
+
+    pub fn calc_ssaa_variables(
+        ssaa: &SSAA,
+        size_x: usize,
+        size_y: usize,
+        bg_color: &Vector4d,
+    ) -> (f64, usize, usize, usize, usize, Vec<u32>, Vec<f64>) {
         let ssaa_fac;
         match ssaa {
             SSAA::X0_125 => ssaa_fac = 0.25,
@@ -93,29 +133,65 @@ impl Canvas {
 
         let size_x_supersized = size_x as f64 * ssaa_fac;
         let size_y_supersized = size_y as f64 * ssaa_fac;
-        Canvas {
-            size_x,
-            size_y,
 
-            buffer: vec![color_vec_to_u32(&bg_color); size_x * size_y],
-            bg_color,
-            lights: vec![],
+        let size_x_supersized_half = (size_x_supersized / 2.0) as usize;
+        let size_y_supersized_half = (size_y_supersized / 2.0) as usize;
 
-            ssaa,
+        let z_buffer_supersized = vec![f64::MAX; (size_x_supersized * size_y_supersized) as usize];
+        let buffer_supersized = vec![
+            crate::graphics::colors::color_vec_to_u32(bg_color);
+            (size_x_supersized * size_y_supersized) as usize
+        ];
+        return (
             ssaa_fac,
-            size_x_supersized: size_x_supersized as usize,
-            size_y_supersized: size_y_supersized as usize,
-            size_x_supersized_half: (size_x_supersized / 2.0) as usize,
-            size_y_supersized_half: (size_y_supersized / 2.0) as usize,
+            size_x_supersized as usize,
+            size_y_supersized as usize,
+            size_x_supersized_half,
+            size_y_supersized_half,
+            buffer_supersized,
+            z_buffer_supersized,
+        );
+    }
 
-            z_buffer_supersized: vec![f64::MAX; (size_x_supersized * size_y_supersized) as usize],
-            buffer_supersized: vec![
-                color_vec_to_u32(&bg_color);
-                (size_x_supersized * size_y_supersized) as usize
-            ],
-            scene: Scene::new(),
-            perspective_matrix: Matrix4x4::eye(),
-            render_smooth,
+    pub fn set_ssaa(&mut self, ssaa: SSAA) {
+        let (
+            ssaa_fac,
+            size_x_supersized,
+            size_y_supersized,
+            size_x_supersized_half,
+            size_y_supersized_half,
+            buffer_supersized,
+            z_buffer_supersized,
+        ) = Self::calc_ssaa_variables(&ssaa, self.size_x, self.size_y, &self.bg_color);
+        self.ssaa = ssaa;
+        self.ssaa_fac = ssaa_fac;
+        self.size_x_supersized = size_x_supersized;
+        self.size_y_supersized = size_y_supersized;
+        self.size_x_supersized_half = size_x_supersized_half;
+        self.size_y_supersized_half = size_y_supersized_half;
+        self.buffer_supersized = buffer_supersized;
+        self.z_buffer_supersized = z_buffer_supersized;
+    }
+
+    pub fn increase_ssaa(&mut self) {
+        match self.ssaa {
+            SSAA::X0_125 => self.set_ssaa(SSAA::X0_25),
+            SSAA::X0_25 => self.set_ssaa(SSAA::X1),
+            SSAA::X1 => self.set_ssaa(SSAA::X4),
+            SSAA::X4 => self.set_ssaa(SSAA::X16),
+            SSAA::X16 => self.set_ssaa(SSAA::X64),
+            SSAA::X64 => return,
+        }
+    }
+
+    pub fn decrease_ssaa(&mut self) {
+        match self.ssaa {
+            SSAA::X0_125 => return,
+            SSAA::X0_25 => self.set_ssaa(SSAA::X0_125),
+            SSAA::X1 => self.set_ssaa(SSAA::X0_25),
+            SSAA::X4 => self.set_ssaa(SSAA::X1),
+            SSAA::X16 => self.set_ssaa(SSAA::X4),
+            SSAA::X64 => self.set_ssaa(SSAA::X16),
         }
     }
 
