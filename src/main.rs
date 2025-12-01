@@ -8,6 +8,7 @@ use crate::graphics::{calc_cube, calc_torus};
 use crate::util::{calc_perspective_matrix, clear_console};
 use crate::vectors::{Vector3d, Vector4d};
 use std::f64::consts::PI;
+use std::{thread, time};
 
 pub mod graphics;
 pub mod util;
@@ -16,9 +17,11 @@ pub mod vectors;
 const SIZE_X: usize = 800;
 const SIZE_Y: usize = 800;
 const SCALE: minifb::Scale = minifb::Scale::X1;
-const SSAA: SSAA = SSAA::X0_125;
+const SSAA: SSAA = SSAA::X4;
 const SHAPE_RESOLUTION: usize = 64;
 const RENDER_SMOOTH: bool = true;
+const TARGET_FPS: usize = 60;
+const TARGET_INTERVAL_MILLIS: f64 = 1000.0 / TARGET_FPS as f64;
 
 // fn main() {
 //     let m1 = Matrix4x4::test();
@@ -106,6 +109,7 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     canvas.set_perspective_matrix(perspective_projection_matrix);
 
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
+        global_timer = Instant::now();
         // render loop
         canvas.reset();
         canvas.reset_z_buffer();
@@ -150,16 +154,22 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             gimbal_radius * camera_theta.cos(),
         );
 
-        // finally, triangles
+        // render scene with updated camera to buffer
         canvas.render_scene_to_buffer(e);
 
         // update minifb with new buffer
         window.update_with_buffer(&canvas.buffer, canvas.size_x, canvas.size_y)?;
 
+        // compute sleep duration to reach target fps
+        let render_time_millis = global_timer.elapsed().as_millis();
+        let delta_to_target_interval =
+            (TARGET_INTERVAL_MILLIS - render_time_millis as f64).max(0.0);
+        thread::sleep(time::Duration::from_millis(delta_to_target_interval as u64));
+        let interval = (render_time_millis as f64 + delta_to_target_interval) / 1000.0;
+
         // print statistics:
-        let interval = global_timer.elapsed().as_millis();
         clear_console();
-        println!("{} FPS", 1.0 / (interval as f64 / 1000.0));
+        println!("{} FPS", 1.0 / interval);
         println!("Rendertime: {} ms", interval,);
         println!("Render config:");
         println!(
@@ -169,14 +179,12 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             canvas.buffer.len()
         );
         println!("  Antialiasing: \n        {}", canvas.ssaa);
-        global_timer = Instant::now();
         println!(
             "       {}x{} pixels, {} pixels in total",
             canvas.size_x_supersized,
             canvas.size_y_supersized,
             canvas.buffer_supersized.len()
         );
-        // thread::sleep(ANIM_INTERVAL);
     }
 
     Ok(())
