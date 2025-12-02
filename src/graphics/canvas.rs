@@ -2,7 +2,7 @@ use crate::graphics::colors::{color_vec_from_f64, color_vec_from_u32, color_vec_
 use crate::graphics::fragment_shader::phong_frag;
 use crate::graphics::scanline::{ActiveEdgeTable, ActiveEdgeTableEntry, EdgeTable, EdgeTableEntry};
 use crate::graphics::shapes::{Mesh, Scene};
-use crate::graphics::{PointLight, Triangle3d, alpha_blend};
+use crate::graphics::{Camera, PointLight, Triangle3d, alpha_blend};
 use crate::vectors::matrices::Matrix4x4;
 use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use core::f64;
@@ -54,8 +54,8 @@ pub struct Canvas {
 
     // scene, this holds all meshes to be rendered
     pub scene: Scene,
-    pub perspective_matrix: Matrix4x4,
     render_smooth: bool,
+    camera: Camera,
 }
 
 impl Canvas {
@@ -65,6 +65,7 @@ impl Canvas {
         bg_color: Vector4d,
         ssaa: SSAA,
         render_smooth: bool,
+        camera: Camera,
     ) -> Canvas {
         let (
             ssaa_fac,
@@ -90,10 +91,10 @@ impl Canvas {
             size_x_supersized_half,
             size_y_supersized_half,
 
+            camera: camera,
             z_buffer_supersized,
             buffer_supersized,
             scene: Scene::new(),
-            perspective_matrix: Matrix4x4::eye(),
             render_smooth,
         }
     }
@@ -218,10 +219,6 @@ impl Canvas {
 
     pub fn add_mesh(&mut self, mesh: Mesh) {
         self.scene.add_mesh(mesh);
-    }
-
-    pub fn set_perspective_matrix(&mut self, matrix: Matrix4x4) {
-        self.perspective_matrix = matrix;
     }
 
     pub fn set_pixel(&mut self, coords: (i32, i32), color: &Vector4d) {
@@ -528,22 +525,21 @@ impl Canvas {
         }
     }
 
-    pub fn render_scene_to_buffer(&mut self, e: Vector3d) {
+    pub fn render_scene_to_buffer(&mut self) {
         // camera space stuff
         // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
-        let a = Vector3d::zero(); // look at
-        let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
-        let g = a - e;
+
+        let g = self.camera.a - self.camera.e;
 
         // camera space spanning vectors
         let w = g.normalize() * -1.0;
-        let u = t.cross(w).normalize();
+        let u = self.camera.u.cross(w).normalize();
         let v = w.cross(u);
 
         let camera_matrix = Matrix4x4::from_vecs(
-            Vector4d::from_vector3d(&u, -u.dot(e)),
-            Vector4d::from_vector3d(&v, -v.dot(e)),
-            Vector4d::from_vector3d(&w, -w.dot(e)),
+            Vector4d::from_vector3d(&u, -u.dot(self.camera.e)),
+            Vector4d::from_vector3d(&v, -v.dot(self.camera.e)),
+            Vector4d::from_vector3d(&w, -w.dot(self.camera.e)),
             Vector4d::new(0.0, 0.0, 0.0, 1.0),
         );
 
@@ -581,7 +577,10 @@ impl Canvas {
                     let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
 
                     // perspective projection
-                    let vertex_projected = self.perspective_matrix.times_vec(vertex_cam_space);
+                    let vertex_projected = self
+                        .camera
+                        .calc_perspective_projection_matrix()
+                        .times_vec(vertex_cam_space);
 
                     // perspective divide by z
                     let vec3 = vertex_projected.truncate_to_3d() / vertex_projected.u;

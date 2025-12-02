@@ -3,7 +3,7 @@ use std::time::Instant;
 use minifb::{CursorStyle, Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 
 use crate::graphics::colors::named_color;
-use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere, calc_teapot};
+use crate::graphics::{Camera, Canvas, PointLight, SSAA, calc_sphere, calc_teapot};
 use crate::graphics::{calc_cube, calc_torus};
 use crate::util::{calc_perspective_matrix, clear_console};
 use crate::vectors::{Vector3d, Vector4d};
@@ -54,7 +54,19 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         },
     )?;
 
-    let mut canvas = Canvas::new(SIZE_X, SIZE_Y, named_color("black"), SSAA, RENDER_SMOOTH);
+    let e = Vector3d::new(30.0, 30.0, 30.0);
+    let a = Vector3d::zero(); // look at
+    let t = Vector3d::new(0.0, 0.0, 1.0); // cam up
+
+    let camera = Camera::new(e, a, t, -2.0, 2.0, -2.0, 2.0, 1.0, 10.0);
+    let mut canvas = Canvas::new(
+        SIZE_X,
+        SIZE_Y,
+        named_color("black"),
+        SSAA,
+        RENDER_SMOOTH,
+        camera,
+    );
 
     // light
     canvas.add_point_light(PointLight::new(
@@ -94,78 +106,34 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     // canvas.add_mesh(cube);
     canvas.add_mesh(teapot);
 
-    // spherical coords for simple camera movement
-    let mut gimbal_radius: f64 = 30.0;
-    let angle_increment: f64 = PI / 128.0;
-    let radius_increment: f64 = 0.3;
-    let mut camera_phi: f64 = 3.0 * 2.0 * PI / 32.0;
-    let mut camera_theta: f64 = 0.7;
-
-    // projection stuff
-    let l = -2.0;
-    let r = 2.0;
-    let b = -2.0;
-    let t = 2.0;
-    let n = 1.0;
-    let f = 10.0;
-
-    let perspective_projection_matrix = calc_perspective_matrix(l, r, b, t, n, f);
-    canvas.set_perspective_matrix(perspective_projection_matrix);
-
+    let mut prev_mouse_pos = (0.0 as f32, 0.0 as f32);
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         global_timer = Instant::now();
-        // render loop
-        canvas.reset();
-        canvas.reset_z_buffer();
 
-        // get active keys
-        let keys_down = window.get_keys();
+        // handle keyboard and mouse
 
-        // wasd camera gimbal-like movement using spherical coords
-        let mut increment_phi = 0.0;
-        let mut increment_theta = 0.0;
-        if keys_down.contains(&Key::W) {
-            increment_theta -= angle_increment;
-        }
-        if keys_down.contains(&Key::A) {
-            increment_phi -= angle_increment;
-        }
-        if keys_down.contains(&Key::S) {
-            increment_theta += angle_increment;
-        }
-        if keys_down.contains(&Key::D) {
-            increment_phi += angle_increment;
-        }
-        if keys_down.contains(&Key::E) {
-            gimbal_radius += radius_increment;
-        }
-        if keys_down.contains(&Key::Q) {
-            gimbal_radius -= radius_increment;
-        }
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
             canvas.decrease_ssaa();
         }
         if window.is_key_pressed(Key::T, KeyRepeat::No) {
             canvas.increase_ssaa();
         }
-        // increment camera angles
-        camera_theta += increment_theta;
-        // clamp phi
-        camera_phi += increment_phi;
-        if camera_theta > PI {
-            camera_theta = PI;
-        } else if camera_theta <= 0.0 {
-            camera_theta = 0.0000001;
-        }
-        // set camera pos (eye)
-        let e = Vector3d::new(
-            gimbal_radius * camera_theta.sin() * camera_phi.cos(),
-            gimbal_radius * camera_theta.sin() * camera_phi.sin(),
-            gimbal_radius * camera_theta.cos(),
-        );
+        // handle mouse input
+        let cur_mouse_pos = window.get_mouse_pos(MouseMode::Pass).unwrap();
 
-        canvas.render_scene_to_buffer(e);
-        // render scene with updated camera to buffer
+        if window.get_mouse_down(MouseButton::Left) {
+            if window.is_key_pressed(Key::LeftCtrl, KeyRepeat::Yes) {
+                // pan mode
+            }
+        }
+        prev_mouse_pos = cur_mouse_pos;
+
+        // render loop
+        canvas.reset();
+        canvas.reset_z_buffer();
+
+        // finally, render scene
+        canvas.render_scene_to_buffer();
 
         // update minifb with new buffer
         window.update_with_buffer(&canvas.buffer, canvas.size_x, canvas.size_y)?;
@@ -174,11 +142,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         let render_time_millis = global_timer.elapsed().as_millis();
         let delta_to_target_interval =
             (TARGET_INTERVAL_MILLIS - render_time_millis as f64).max(0.0);
-        thread::sleep(time::Duration::from_millis(delta_to_target_interval as u64));
         let interval = (render_time_millis as f64 + delta_to_target_interval) / 1000.0;
 
         // print statistics:
         clear_console();
+
         println!("{} FPS", 1.0 / interval);
         println!("Rendertime: {} ms", interval,);
         println!("Render config:");
@@ -195,6 +163,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             canvas.size_y_supersized,
             canvas.buffer_supersized.len()
         );
+        println!(
+            "Mouse delta:\n     {}, {}",
+            cur_mouse_pos.0, cur_mouse_pos.0
+        );
+        thread::sleep(time::Duration::from_millis(delta_to_target_interval as u64));
     }
 
     Ok(())
