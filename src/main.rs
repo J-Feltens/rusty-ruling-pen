@@ -110,6 +110,8 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     while window.is_open() && !window.is_key_down(Key::Enter) && !window.is_key_down(Key::Space) {
         global_timer = Instant::now();
 
+        let (g, u, v, w) = canvas.camera.calc_guvw();
+
         // handle keyboard and mouse
 
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
@@ -124,6 +126,9 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
         if window.get_mouse_down(MouseButton::Left) {
             if window.is_key_pressed(Key::LeftCtrl, KeyRepeat::Yes) {
                 // pan mode
+
+                // canvas.camera.e.x += 1.0;
+                // canvas.camera.a.x += 1.0;
             }
         }
         prev_mouse_pos = cur_mouse_pos;
@@ -162,6 +167,10 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             canvas.size_x_supersized,
             canvas.size_y_supersized,
             canvas.buffer_supersized.len()
+        );
+        println!(
+            "Camera: \n    eye: {}\n    ufw: {}, {}, {}",
+            canvas.camera.e, u, v, w
         );
         println!(
             "Mouse delta:\n     {}, {}",

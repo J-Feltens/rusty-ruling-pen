@@ -54,8 +54,8 @@ pub struct Canvas {
 
     // scene, this holds all meshes to be rendered
     pub scene: Scene,
-    render_smooth: bool,
-    camera: Camera,
+    pub render_smooth: bool,
+    pub camera: Camera,
 }
 
 impl Canvas {
@@ -529,12 +529,7 @@ impl Canvas {
         // camera space stuff
         // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
 
-        let g = self.camera.a - self.camera.e;
-
-        // camera space spanning vectors
-        let w = g.normalize() * -1.0;
-        let u = self.camera.u.cross(w).normalize();
-        let v = w.cross(u);
+        let (g, u, v, w) = self.camera.calc_guvw();
 
         let camera_matrix = Matrix4x4::from_vecs(
             Vector4d::from_vector3d(&u, -u.dot(self.camera.e)),
