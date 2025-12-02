@@ -54,6 +54,6 @@ impl Camera {
         let u = self.u.cross(w).normalize();
         let v = w.cross(u);
 
-        return (g, w, u, v);
+        return (g, u, v, w);
     }
 }
