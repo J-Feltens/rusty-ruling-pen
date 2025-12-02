@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use minifb::{Key, KeyRepeat, Window, WindowOptions};
+use minifb::{CursorStyle, Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 
 use crate::graphics::colors::named_color;
 use crate::graphics::{Canvas, PointLight, SSAA, calc_sphere, calc_teapot};
@@ -160,16 +160,11 @@ fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
             gimbal_radius * camera_theta.cos(),
         );
 
-        let mut new_canvas = canvas.clone();
-        let handle = thread::spawn(|| {
-            new_canvas.render_scene_to_buffer(e.clone());
-        });
-        handle.join().unwrap();
-
+        canvas.render_scene_to_buffer(e);
         // render scene with updated camera to buffer
 
         // update minifb with new buffer
-        window.update_with_buffer(&new_canvas.buffer, canvas.size_x, canvas.size_y)?;
+        window.update_with_buffer(&canvas.buffer, canvas.size_x, canvas.size_y)?;
 
         // compute sleep duration to reach target fps
         let render_time_millis = global_timer.elapsed().as_millis();
