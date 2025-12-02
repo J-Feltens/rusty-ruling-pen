@@ -31,6 +31,10 @@ const TARGET_INTERVAL_MILLIS: f64 = 1000.0 / TARGET_FPS as f64;
 //     println!("{}", m2);
 // }
 
+/*
+   Wowww, I really fucked up the git timeline. Let this be a warning to future me to lay off the weed.
+*/
+
 fn main() -> Result<(), Box<(dyn std::error::Error + 'static)>> {
     let mut global_timer = Instant::now();
 
