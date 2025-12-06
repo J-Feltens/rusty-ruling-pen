@@ -8,7 +8,7 @@ use crate::vectors::{IntegerVector2d, Vector3d, Vector4d};
 use core::f64;
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum SSAA {
     X0_125,
     X0_25,
@@ -32,7 +32,7 @@ impl fmt::Display for SSAA {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Canvas {
     pub size_x: usize,
     pub size_y: usize,
@@ -51,22 +51,10 @@ pub struct Canvas {
     pub size_y_supersized: usize,
     pub size_x_supersized_half: usize,
     pub size_y_supersized_half: usize,
-
-    // scene, this holds all meshes to be rendered
-    pub scene: Scene,
-    pub render_smooth: bool,
-    pub camera: Camera,
 }
 
 impl Canvas {
-    pub fn new(
-        size_x: usize,
-        size_y: usize,
-        bg_color: Vector4d,
-        ssaa: SSAA,
-        render_smooth: bool,
-        camera: Camera,
-    ) -> Canvas {
+    pub fn new(size_x: usize, size_y: usize, bg_color: Vector4d, ssaa: SSAA) -> Canvas {
         let (
             ssaa_fac,
             size_x_supersized,
@@ -91,11 +79,8 @@ impl Canvas {
             size_x_supersized_half,
             size_y_supersized_half,
 
-            camera: camera,
             z_buffer_supersized,
             buffer_supersized,
-            scene: Scene::new(),
-            render_smooth,
         }
     }
 
@@ -211,14 +196,6 @@ impl Canvas {
             && (x as usize) < self.size_y_supersized
             && y >= 0
             && (y as usize) < self.size_y_supersized;
-    }
-
-    pub fn add_point_light(&mut self, light: PointLight) {
-        self.lights.push(light);
-    }
-
-    pub fn add_mesh(&mut self, mesh: Mesh) {
-        self.scene.add_mesh(mesh);
     }
 
     pub fn set_pixel(&mut self, coords: (i32, i32), color: &Vector4d) {
@@ -523,107 +500,5 @@ impl Canvas {
 
             iteration += 1;
         }
-    }
-
-    pub fn render_scene_to_buffer(&mut self) {
-        // camera space stuff
-        // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
-
-        let (g, u, v, w) = self.camera.calc_guvw();
-
-        let camera_matrix = Matrix4x4::from_vecs(
-            Vector4d::from_vector3d(&u, -u.dot(self.camera.e)),
-            Vector4d::from_vector3d(&v, -v.dot(self.camera.e)),
-            Vector4d::from_vector3d(&w, -w.dot(self.camera.e)),
-            Vector4d::new(0.0, 0.0, 0.0, 1.0),
-        );
-
-        // transform lights to camera space
-
-        let mut lights_cam_space_reallight = self.lights.clone();
-        for light in lights_cam_space_reallight.iter_mut() {
-            light.pos = camera_matrix
-                .times_vec(Vector4d::from_vector3d(&light.pos, 1.0))
-                .truncate_to_3d();
-        }
-
-        for mesh in self.scene.meshes.clone() {
-            for face in mesh.faces.iter() {
-                let triangle = Triangle3d::new(
-                    mesh.vertices[face[0]],
-                    mesh.vertices[face[1]],
-                    mesh.vertices[face[2]],
-                    &mesh.color,
-                );
-                // println!("{}", triangle);
-
-                // backface culling
-                // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
-                if w.dot(triangle.normal) < 0.0 {
-                    continue;
-                }
-
-                let mut skip_triangle = false;
-                let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
-                for (i, vertex) in triangle.vertices.iter().enumerate() {
-                    let vertex_homo = Vector4d::from_vector3d(vertex, 1.0); // hehe
-
-                    // transform to camera space
-                    let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
-
-                    // perspective projection
-                    let vertex_projected = self
-                        .camera
-                        .calc_perspective_projection_matrix()
-                        .times_vec(vertex_cam_space);
-
-                    // perspective divide by z
-                    let vec3 = vertex_projected.truncate_to_3d() / vertex_projected.u;
-
-                    if vec3.x < -1.0 || vec3.x > 1.0 || vec3.y < -1.0 || vec3.y > 1.0 {
-                        skip_triangle = true;
-                    }
-
-                    // store attributes like pos and normal while still in camera space
-                    let normal_cam_space;
-                    if self.render_smooth {
-                        normal_cam_space = camera_matrix
-                            .times_vec(Vector4d::from_vector3d(&mesh.vertex_normals[face[i]], 0.0));
-                    } else {
-                        normal_cam_space =
-                            camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
-                    }
-                    let mut attrs: Vec<f64> = vec![0.0; 11];
-                    attrs[0] = vertex_cam_space.x;
-                    attrs[1] = vertex_cam_space.y;
-                    attrs[2] = vertex_cam_space.z;
-                    attrs[3] = vertex_projected.z;
-                    attrs[4] = normal_cam_space.x;
-                    attrs[5] = normal_cam_space.y;
-                    attrs[6] = normal_cam_space.z;
-                    attrs[7] = triangle.color.x;
-                    attrs[8] = triangle.color.y;
-                    attrs[9] = triangle.color.z;
-                    attrs[10] = triangle.color.u;
-
-                    let ivec2 = IntegerVector2d::new(
-                        (vec3.x * self.size_x_supersized_half as f64) as i32
-                            + self.size_x_supersized_half as i32,
-                        (vec3.y * self.size_y_supersized_half as f64) as i32
-                            + self.size_y_supersized_half as i32,
-                        attrs,
-                    );
-                    triangle_projected[i] = ivec2;
-                }
-
-                // cull triangles that is even partially out if bounds
-                if skip_triangle {
-                    continue;
-                }
-                self.draw_polygon_onto_buffer(&triangle_projected, &lights_cam_space_reallight);
-            }
-        }
-
-        self.apply_ssaa();
     }
 }

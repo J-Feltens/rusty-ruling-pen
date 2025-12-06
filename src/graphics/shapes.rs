@@ -1,20 +1,141 @@
+use crate::graphics::{Camera, Canvas, PointLight, Triangle3d};
 use crate::util::linspace;
-use crate::vectors::{Matrix3x3, Vector3d, Vector4d};
+use crate::vectors::matrices::Matrix4x4;
+use crate::vectors::{IntegerVector2d, Matrix3x3, Vector3d, Vector4d};
 use std::f64::consts::PI;
 use std::fs;
 
 #[derive(Debug, Clone)]
 pub struct Scene {
     pub meshes: Vec<Mesh>,
+    pub lights: Vec<PointLight>,
+
+    pub canvas: Canvas,
+
+    pub render_smooth: bool,
+    pub camera: Camera,
 }
 
 impl Scene {
-    pub fn new() -> Self {
-        Self { meshes: vec![] }
+    pub fn new(canvas: Canvas, camera: Camera, render_smooth: bool) -> Self {
+        Self {
+            meshes: vec![],
+            lights: vec![],
+            canvas,
+            render_smooth,
+            camera,
+        }
     }
 
     pub fn add_mesh(&mut self, mesh: Mesh) {
         self.meshes.push(mesh);
+    }
+
+    pub fn add_light(&mut self, light: PointLight) {
+        self.lights.push(light);
+    }
+
+    pub fn render_scene_to_buffer(&mut self) {
+        // camera space stuff
+        // let mut e = Vector3d::new(5.0, 5.0, 1.0) * 2.0; // cam pos
+
+        let (g, u, v, w) = self.camera.calc_guvw();
+
+        let camera_matrix = Matrix4x4::from_vecs(
+            Vector4d::from_vector3d(&u, -u.dot(self.camera.e)),
+            Vector4d::from_vector3d(&v, -v.dot(self.camera.e)),
+            Vector4d::from_vector3d(&w, -w.dot(self.camera.e)),
+            Vector4d::new(0.0, 0.0, 0.0, 1.0),
+        );
+
+        // transform lights to camera space
+
+        let mut lights_cam_space_reallight = self.lights.clone();
+        for light in lights_cam_space_reallight.iter_mut() {
+            light.pos = camera_matrix
+                .times_vec(Vector4d::from_vector3d(&light.pos, 1.0))
+                .truncate_to_3d();
+        }
+
+        for mesh in self.meshes.clone() {
+            for face in mesh.faces.iter() {
+                let triangle = Triangle3d::new(
+                    mesh.vertices[face[0]],
+                    mesh.vertices[face[1]],
+                    mesh.vertices[face[2]],
+                    &mesh.color,
+                );
+                // println!("{}", triangle);
+
+                // backface culling
+                // Everlast - The Culling is Coming  =>   https://www.youtube.com/watch?v=yWYsbxkhlpU
+                if w.dot(triangle.normal) < 0.0 {
+                    continue;
+                }
+
+                let mut skip_triangle = false;
+                let mut triangle_projected = vec![IntegerVector2d::zero(); 3];
+                for (i, vertex) in triangle.vertices.iter().enumerate() {
+                    let vertex_homo = Vector4d::from_vector3d(vertex, 1.0); // hehe
+
+                    // transform to camera space
+                    let vertex_cam_space = camera_matrix.times_vec(vertex_homo);
+
+                    // perspective projection
+                    let vertex_projected = self
+                        .camera
+                        .calc_perspective_projection_matrix()
+                        .times_vec(vertex_cam_space);
+
+                    // perspective divide by z
+                    let vec3 = vertex_projected.truncate_to_3d() / vertex_projected.u;
+
+                    if vec3.x < -1.0 || vec3.x > 1.0 || vec3.y < -1.0 || vec3.y > 1.0 {
+                        skip_triangle = true;
+                    }
+
+                    // store attributes like pos and normal while still in camera space
+                    let normal_cam_space;
+                    if self.render_smooth {
+                        normal_cam_space = camera_matrix
+                            .times_vec(Vector4d::from_vector3d(&mesh.vertex_normals[face[i]], 0.0));
+                    } else {
+                        normal_cam_space =
+                            camera_matrix.times_vec(Vector4d::from_vector3d(&triangle.normal, 0.0));
+                    }
+                    let mut attrs: Vec<f64> = vec![0.0; 11];
+                    attrs[0] = vertex_cam_space.x;
+                    attrs[1] = vertex_cam_space.y;
+                    attrs[2] = vertex_cam_space.z;
+                    attrs[3] = vertex_projected.z;
+                    attrs[4] = normal_cam_space.x;
+                    attrs[5] = normal_cam_space.y;
+                    attrs[6] = normal_cam_space.z;
+                    attrs[7] = triangle.color.x;
+                    attrs[8] = triangle.color.y;
+                    attrs[9] = triangle.color.z;
+                    attrs[10] = triangle.color.u;
+
+                    let ivec2 = IntegerVector2d::new(
+                        (vec3.x * self.canvas.size_x_supersized_half as f64) as i32
+                            + self.canvas.size_x_supersized_half as i32,
+                        (vec3.y * self.canvas.size_y_supersized_half as f64) as i32
+                            + self.canvas.size_y_supersized_half as i32,
+                        attrs,
+                    );
+                    triangle_projected[i] = ivec2;
+                }
+
+                // cull triangles that is even partially out if bounds
+                if skip_triangle {
+                    continue;
+                }
+                self.canvas
+                    .draw_polygon_onto_buffer(&triangle_projected, &lights_cam_space_reallight);
+            }
+        }
+
+        self.canvas.apply_ssaa();
     }
 }
 
@@ -244,21 +365,33 @@ pub fn calc_sphere(origin: Vector3d, radius: f64, resolution: usize, color: &Vec
     return mesh;
 }
 
-pub fn calc_teapot(color: Vector4d, resolution: usize) -> Mesh {
+pub fn calc_teapot(color: Vector4d, resolution: usize, booleaned: bool) -> Mesh {
     /*
        expects resolution to be either 1, 2 or 3
     */
 
     let file_path = format!(
         "src/graphics/{}.txt",
-        if resolution == 1 {
-            "utah_teapot_3488"
-        } else if resolution == 2 {
-            "utah_teapot_19480"
-        } else if resolution == 3 {
-            "utah_teapot_145620"
+        if booleaned {
+            if resolution == 1 {
+                "utah_teapot_booleaned_5144"
+            } else if resolution == 2 {
+                "utah_teapot_booleaned_22885"
+            } else if resolution == 3 {
+                "utah_teapot_booleaned_158865"
+            } else {
+                panic!("Have you bot enough vertices already??")
+            }
         } else {
-            panic!("Have you bot enough vertices already??")
+            if resolution == 1 {
+                "utah_teapot_3488"
+            } else if resolution == 2 {
+                "utah_teapot_19480"
+            } else if resolution == 3 {
+                "utah_teapot_145620"
+            } else {
+                panic!("Have you bot enough vertices already??")
+            }
         }
     );
     let mut mesh = Mesh::init(color, 0.0);
@@ -269,8 +402,8 @@ pub fn calc_teapot(color: Vector4d, resolution: usize) -> Mesh {
     for face in faces {
         let vertices: Vec<&str> = face.split("\n").collect();
         let v1_string: Vec<&str> = vertices[0].split(" ").collect();
-        let v2_string: Vec<&str> = vertices[1].split(" ").collect();
-        let v3_string: Vec<&str> = vertices[2].split(" ").collect();
+        let v2_string: Vec<&str> = vertices[2].split(" ").collect();
+        let v3_string: Vec<&str> = vertices[4].split(" ").collect();
         let v1 = Vector3d::new(
             v1_string[0].parse::<f64>().unwrap(),
             v1_string[1].parse::<f64>().unwrap() - 1.0,

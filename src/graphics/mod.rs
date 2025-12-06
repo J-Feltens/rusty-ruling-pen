@@ -12,5 +12,5 @@ pub use camera::Camera;
 pub use canvas::{Canvas, SSAA};
 pub use colors::alpha_blend;
 pub use lighting::PointLight;
-pub use shapes::{calc_cube, calc_sphere, calc_teapot, calc_torus};
+pub use shapes::{Scene, calc_cube, calc_sphere, calc_teapot, calc_torus};
 pub use triangles::Triangle3d;
